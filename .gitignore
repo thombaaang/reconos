@@ -59,3 +59,10 @@ modules.builtin
 # some specific files
 #
 *.dtb
+
+#
+# some ReconOS specific stuff
+#
+demos/*/*.hw/
+demos/*/*.sw/
+demos/*/*.sim/
