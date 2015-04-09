@@ -1,11 +1,13 @@
 #include "reconos.h"
 #include "reconos_app.h"
 #include "mbox.h"
+#include "timer.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-#define BLOCK_SIZE 1024
+#define BLOCK_SIZE 2048
 
 #define log(...) printf(__VA_ARGS__); fflush(stdout)
 
@@ -47,8 +49,7 @@ void _merge(uint32_t *data, uint32_t *tmp,
 }
 
 void merge(uint32_t *data, int data_count) {
-	int bs, bi, i;
-	int li, lim, ri, rim;
+	int bs, bi;
 	uint32_t *tmp;
 
 	tmp = (uint32_t *)malloc(data_count * sizeof(uint32_t));
@@ -67,9 +68,9 @@ void merge(uint32_t *data, int data_count) {
 }
 
 int main(int argc, char **argv) {
-	int i, j;
+	int i;
 	int num_hwts, num_swts, num_blocks;
-	uint32_t *data, *copy, *tmp;
+	uint32_t *data, *copy;
 	int data_count;
 
 	unsigned int t_start, t_gen, t_sort, t_merge, t_check;
@@ -105,8 +106,9 @@ int main(int argc, char **argv) {
 	log("generating data ...\n");
 	data_count = num_blocks * BLOCK_SIZE;
 	data = (uint32_t *)malloc(data_count * sizeof(uint32_t));
+	copy = (uint32_t *)malloc(data_count * sizeof(uint32_t));
 	for (i = 0; i < data_count; i++) {
-		data[i] = data_count - 1;
+		data[i] = data_count - i - 1;
 	}
 	memcpy(copy, data, data_count * sizeof(uint32_t));
 	t_gen = timer_get() - t_start;
@@ -130,14 +132,14 @@ int main(int argc, char **argv) {
 	t_start = timer_get();
 	log("merging sorted data slices ...\n");
 	merge(data, data_count);
-	t_sort = timer_get() - t_start;
+	t_merge = timer_get() - t_start;
 
 	t_start = timer_get();
-	log("checking sorted data ...");
+	log("checking sorted data ...\n");
 	qsort(copy, data_count, sizeof(uint32_t), cmp_uint32t);
 	for (i = 0; i < data_count; i++) {
 		if (data[i] != copy[i]) {
-			log("expected 0x%08x but found 0x%08x\n at %d", copy[i], data[i], i);
+			log("expected 0x%08x but found 0x%08x at %d\n", copy[i], data[i], i);
 		}
 	}
 	t_check = timer_get() - t_start;
@@ -149,14 +151,15 @@ int main(int argc, char **argv) {
 	}
 	log("\n");
 
-	printf("Running times (size: %d words, %d hw-threads, %d sw-threads):\n"
-	       "  Generate data: %u ms\n"
-	       "  Sort data    : %u ms\n"
-	       "  Merge data   : %u ms\n"
-	       "  Check data   : %u ms\n"
-	       "Total computation time (sort & merge): %u ms\n",
-	       data_count * sizeof(uint32_t), num_hwts, num_swts,
-	       t_gen, t_sort, t_merge, t_check, t_sort + t_merge );
+	log("Running times (size: %d words, %d hw-threads, %d sw-threads):\n"
+	    "  Generate data: %f ms\n"
+	    "  Sort data    : %f ms\n"
+	    "  Merge data   : %f ms\n"
+	    "  Check data   : %f ms\n"
+	    "Total computation time (sort & merge): %f ms\n",
+	    data_count * sizeof(uint32_t), num_hwts, num_swts,
+	    timer_toms(t_gen), timer_toms(t_sort), timer_toms(t_merge),
+	    timer_toms(t_check), timer_toms(t_sort + t_merge));
 
 	timer_cleanup();
 	reconos_app_cleanup();

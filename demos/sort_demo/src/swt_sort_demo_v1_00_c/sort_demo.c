@@ -2,6 +2,8 @@
 #include "reconos_app.h"
 #include "mbox.h"
 
+#define BLOCK_SIZE 2048
+
 static struct mbox *mbox_addr;
 static struct mbox *mbox_ack;
 
@@ -45,7 +47,7 @@ void *swt_sort_demo(void *data) {
 			pthread_exit(0);
 		}
 
-		bubblesort((unsigned int *)ret, 1024);
+		bubblesort((uint32_t *)ret, BLOCK_SIZE);
 		mbox_put(mbox_ack, ret);
 	}
 }
