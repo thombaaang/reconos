@@ -26,6 +26,7 @@
 #include <stdio.h>
 
 #define TIMER_BASE_ADDR 0x64a00000
+#define CLK_FREQ 100000000
 
 volatile uint32_t *ptr = 0;
 
@@ -93,4 +94,8 @@ unsigned int timer_get() {
 void timer_cleanup() {
 	munmap((void *)ptr, 0x10000);
 	ptr = 0;
+}
+
+float timer_toms(unsigned int t) {
+	return t / (CLK_FREQ / 1000.0);
 }

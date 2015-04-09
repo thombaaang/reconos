@@ -57,4 +57,11 @@ unsigned int timer_get();
  */
 void timer_cleanup();
 
+/*
+ * Converts the timer value to millisecongs.
+ *
+ *   t - timer value or difference
+ */
+float timer_toms(unsigned int t);
+
 #endif /* TIMER_H */
