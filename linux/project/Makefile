@@ -13,6 +13,9 @@ BUILD_OBJS = $(OBJS:%=_build/%)
 all: $(BUILD_OBJS)
 	$(CC) $(BUILD_OBJS) $(LDFLAGS) -o <<NAME>>
 
+install: all
+	cp <<NAME>> $(PREFIX)
+
 clean:
 	rm -rf _build <<NAME>>
 
