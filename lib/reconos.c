@@ -248,7 +248,7 @@ void reconos_thread_create(struct reconos_thread *rt, int slot) {
 void reconos_thread_create_auto(struct reconos_thread *rt, int tt) {
 	int i;
 
-	if (tt && RECONOS_THREAD_HW) {
+	if (tt & RECONOS_THREAD_HW) {
 		for (i = 0; i < rt->allowed_hwslot_count; i++) {
 			if (!rt->allowed_hwslots[i]->rt) {
 				break;
@@ -260,7 +260,7 @@ void reconos_thread_create_auto(struct reconos_thread *rt, int tt) {
 		}
 
 		reconos_thread_create(rt, i);
-	} else if (tt && RECONOS_THREAD_SW) {
+	} else if (tt & RECONOS_THREAD_SW) {
 		pthread_create(&rt->swslot, 0, rt->swentry, (void*)rt);
 	}
 }
@@ -953,7 +953,6 @@ intr:
 void *dt_delegate(void *arg) {
 	struct hwslot *slot;
 	uint32_t cmd;
-	int ret;
 
 	slot = (struct hwslot *)arg;
 
@@ -973,55 +972,55 @@ void *dt_delegate(void *arg) {
 
 		switch (cmd & OSIF_CMD_MASK) {
 			case OSIF_CMD_MBOX_PUT:
-				ret = dt_mbox_put(slot);
+				dt_mbox_put(slot);
 				break;
 
 			case OSIF_CMD_MBOX_TRYPUT:
-				ret = dt_mbox_tryput(slot);
+				dt_mbox_tryput(slot);
 				break;
 
 			case OSIF_CMD_SEM_POST:
-				ret = dt_sem_post(slot);
+				dt_sem_post(slot);
 				break;
 
 			case OSIF_CMD_MUTEX_UNLOCK:
-				ret = dt_mutex_unlock(slot);
+				dt_mutex_unlock(slot);
 				break;
 
 			case OSIF_CMD_COND_SIGNAL:
-				ret = dt_cond_signal(slot);
+				dt_cond_signal(slot);
 				break;
 
 			case OSIF_CMD_COND_BROADCAST:
-				ret = dt_cond_broadcast(slot);
+				dt_cond_broadcast(slot);
 				break;
 
 			case OSIF_CMD_MBOX_GET:
-				ret = dt_mbox_get(slot);
+				dt_mbox_get(slot);
 				break;
 
 			case OSIF_CMD_MBOX_TRYGET:
-				ret = dt_mbox_tryget(slot);
+				dt_mbox_tryget(slot);
 				break;
 
 			case OSIF_CMD_SEM_WAIT:
-				ret = dt_sem_wait(slot);
+				dt_sem_wait(slot);
 				break;
 
 			case OSIF_CMD_MUTEX_LOCK:
-				ret = dt_mutex_lock(slot);
+				dt_mutex_lock(slot);
 				break;
 
 			case OSIF_CMD_MUTEX_TRYLOCK:
-				ret = dt_mutex_trylock(slot);
+				dt_mutex_trylock(slot);
 				break;
 
 			case OSIF_CMD_COND_WAIT:
-				ret = dt_cond_wait(slot);
+				dt_cond_wait(slot);
 				break;
 
 			case OSIF_CMD_THREAD_GET_INIT_DATA:
-				ret = dt_get_init_data(slot);
+				dt_get_init_data(slot);
 				break;
 
 			case OSIF_CMD_THREAD_EXIT:
@@ -1047,6 +1046,8 @@ void *dt_delegate(void *arg) {
 				panic("[reconos-dt-%d] ERROR received unknown command 0x%08x\n", slot->id, cmd);
 				break;
 		}
+
+		debug("[reconos-dt-%d] executed command 0x%x with status %d\n", slot->id, cmd, ret);
 	}
 
 return NULL;

@@ -72,8 +72,8 @@ void reconos_resource_init(struct reconos_resource *rr,
  *   sw - software thread
  *   hw - hardware thread
  */
-#define RECONOS_THREAD_SW 0x0
-#define RECONOS_THREAD_HW 0x1
+#define RECONOS_THREAD_SW 0x01
+#define RECONOS_THREAD_HW 0x02
 
 /*
  * Definition of the thread states
