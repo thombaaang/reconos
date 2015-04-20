@@ -43,8 +43,8 @@
       <association xil_pn:name="Implementation" xil_pn:seqID="28"/>
       <library xil_pn:name="reconos_v3_01_a"/>
     </file>
-    <<generate for THREAD_SRCS>>
-    <file xil_pn:name="<<Path>>" xil_pn:type="FILE_VHDL">
+    <<generate for FILES>>
+    <file xil_pn:name="<<File>>" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="0"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>

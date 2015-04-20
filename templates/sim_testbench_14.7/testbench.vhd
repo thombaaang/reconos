@@ -169,7 +169,7 @@ begin
 			FIFO_Rst => sys_rst
 		);
 
-	hwt : entity work.<<Thread>>
+	hwt : entity work.rt_<<THREAD>>
 		port map (
 			OSIF_Sw2Hw_Data => osif_sw2hw_s_data,
 			OSIF_Sw2Hw_Empty => osif_sw2hw_s_empty,

@@ -15,6 +15,9 @@
 --   description:  The entire ReconOS package with type definitions and
 --                 hardware OS services in VHDL
 --
+--   fixme:        osif read is not correct if it is not empty
+--                 same problem might occur for write
+--
 -- ======================================================================
 
 
@@ -39,7 +42,7 @@ package reconos_pkg_tb is
 	constant C_CLK_PRD : time := 10 ns;
 	constant C_OSIF_ADDR_WIDTH : integer := 2;
 	constant C_MEMIF_ADDR_WIDTH : integer := 6;
-	constant C_SYSTEM_RAM_SIZE_WORDS : integer := 1024;
+	constant C_SYSTEM_RAM_SIZE_WORDS : integer := 2048;
 
 
 	-- == Type definitions ================================================
@@ -384,6 +387,14 @@ package body reconos_pkg_tb is
 		       "OSIF-Call mbox_put (0x" & hex(handle) & "): 0x" & hex(word);
 
 		tb_o_osif.hw2sw_re <= '0';
+
+		tb_o_osif.sw2hw_we <= '1';
+		tb_o_osif.sw2hw_data <= word;
+
+		wait until tb_i_osif.sw2hw_full = '0';
+		wait for C_CLK_PRD;
+
+		tb_o_osif.sw2hw_we <= '0';
 
 		wait for C_CLK_PRD;
 	end procedure tb_osif_mbox_put;

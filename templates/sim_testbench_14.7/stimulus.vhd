@@ -56,8 +56,8 @@ begin
 		-- insert stimulus here
 		--
 
-		--tb_osif_mbox_put(tb_i_osif, tb_o_osif, x"00000000");
-		--tb_osif_mbox_get(tb_i_osif, tb_o_osif, x"00000000");
+		tb_osif_mbox_get(tb_i_osif, tb_o_osif, x"00000000");
+		tb_osif_mbox_put(tb_i_osif, tb_o_osif);
 		
 		wait;
 	end process stimulus;
