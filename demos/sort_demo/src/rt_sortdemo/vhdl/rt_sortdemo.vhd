@@ -2,14 +2,12 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
-
-library proc_common_v3_00_a;
-use proc_common_v3_00_a.proc_common_pkg.all;
+use ieee.math_real.all;
 
 library reconos_v3_01_a;
 use reconos_v3_01_a.reconos_pkg.all;
 
-entity hwt_sort_demo is
+entity rt_sortdemo is
 	port (
 		-- OSIF FIFO ports
 		OSIF_Sw2Hw_Data    : in  std_logic_vector(31 downto 0);
@@ -35,9 +33,9 @@ entity hwt_sort_demo is
 		
 		DEBUG : out std_logic_vector(110 downto 0)
 	);
-end entity hwt_sort_demo;
+end entity rt_sortdemo;
 
-architecture implementation of hwt_sort_demo is
+architecture implementation of rt_sortdemo is
 	type STATE_TYPE is (
 					STATE_INIT,
 					STATE_GET_ADDR,STATE_READ,STATE_SORTING,
@@ -68,7 +66,7 @@ architecture implementation of hwt_sort_demo is
 
 	-- IMPORTANT: define size of local RAM here!!!! 
 	constant C_LOCAL_RAM_SIZE          : integer := 2048;
-	constant C_LOCAL_RAM_ADDRESS_WIDTH : integer := clog2(C_LOCAL_RAM_SIZE);
+	constant C_LOCAL_RAM_ADDRESS_WIDTH : integer := integer(ceil(log2(real(C_LOCAL_RAM_SIZE))));
 	constant C_LOCAL_RAM_SIZE_IN_BYTES : integer := 4*C_LOCAL_RAM_SIZE;
 
 	type LOCAL_MEMORY_T is array (0 to C_LOCAL_RAM_SIZE-1) of std_logic_vector(31 downto 0);

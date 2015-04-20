@@ -11,9 +11,6 @@
 
 #define log(...) printf(__VA_ARGS__); fflush(stdout)
 
-static struct mbox *mbox_addr = &sortdemo_resources_address;
-static struct mbox *mbox_ack = &sortdemo_resources_acknowledge;
-
 void print_help() {
 	printf("ReconOS v3 sort demo application.\n"
 	       "Sorts a buffer full of data with a variable number of sw and hw threads.\n"
@@ -115,7 +112,7 @@ int main(int argc, char **argv) {
 
 	log("putting %d blocks into job queue: ", num_blocks);
 	for (i = 0; i < num_blocks; i++) {
-		mbox_put(mbox_addr, (uint32_t)(data + i * BLOCK_SIZE));
+		mbox_put(resources_address, (uint32_t)(data + i * BLOCK_SIZE));
 		log(".");
 	}
 	log("\n");
@@ -123,16 +120,18 @@ int main(int argc, char **argv) {
 	t_start = timer_get();
 	log("waiting for %d acknowledgements: ", num_blocks);
 	for (i = 0; i < num_blocks; i++) {
-		mbox_get(mbox_ack);
+		mbox_get(resources_acknowledge);
 		log(".");
 	}
 	log("\n");
 	t_sort = timer_get() - t_start;
 
+#if 1
 	t_start = timer_get();
 	log("merging sorted data slices ...\n");
 	merge(data, data_count);
 	t_merge = timer_get() - t_start;
+#endif
 
 	t_start = timer_get();
 	log("checking sorted data ...\n");
@@ -144,12 +143,15 @@ int main(int argc, char **argv) {
 	}
 	t_check = timer_get() - t_start;
 
+#if 0
+	// do we really want to terminate?
 	log("sending terminate message:");
 	for (i = 0; i < num_hwts + num_swts; i++) {
 		log(" %d", i);
-		mbox_put(mbox_addr, 0xffffffff);
+		mbox_put(resources_address, 0xffffffff);
 	}
 	log("\n");
+#endif
 
 	log("Running times (size: %d words, %d hw-threads, %d sw-threads):\n"
 	    "  Generate data: %f ms\n"
@@ -157,7 +159,7 @@ int main(int argc, char **argv) {
 	    "  Merge data   : %f ms\n"
 	    "  Check data   : %f ms\n"
 	    "Total computation time (sort & merge): %f ms\n",
-	    data_count * sizeof(uint32_t), num_hwts, num_swts,
+	    data_count, num_hwts, num_swts,
 	    timer_toms(t_gen), timer_toms(t_sort), timer_toms(t_merge),
 	    timer_toms(t_check), timer_toms(t_sort + t_merge));
 
