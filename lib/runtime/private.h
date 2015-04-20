@@ -7,7 +7,7 @@
  *
  * ======================================================================
  *
- *   title:        ReconOS library - Private header file
+ *   title:        Private header file
  *
  *   project:      ReconOS
  *   author:       Andreas Agne, University of Paderborn

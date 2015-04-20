@@ -7,12 +7,14 @@
  *
  * ======================================================================
  *
- *   title:        ReconOS library - ReconOS Main header
+ *   title:        Application library
  *
  *   project:      ReconOS
  *   author:       Andreas Agne, University of Paderborn
  *                 Christoph Rüthing, University of Paderborn
- *   description:  Auto-generated application specific header file.
+ *   description:  Auto-generated application specific header file
+ *                 including definitions of all resources and functions
+ *                 to instantiate resources and threads automatically.
  *
  * ======================================================================
  */
@@ -30,13 +32,6 @@
 /* == Application resources ============================================ */
 
 /*
- * Definition of resource ids.
- */
-<<generate for RESOURCES>>
-#define <<FqnUpper>> 0x<<HexId>>
-<<end generate>>
-
-/*
  * Definition of different resources of the application.
  *
  *   mbox  - mailbox (struct mbox)
@@ -45,19 +40,23 @@
  *   cond  - condition variable (pthread_cond)
  */
 <<generate for RESOURCES(Type == "mbox")>>
-extern struct mbox <<FqnLower>>;
+extern struct mbox <<NameLower>>_s;
+extern struct mbox *<<NameLower>>;
 <<end generate>>
 
 <<generate for RESOURCES(Type == "sem")>>
-extern sem_t <<FqnLower>>;
+extern sem_t <<NameLower>>_s;
+extern sem_t *<<NameLower>>;
 <<end generate>>
 
 <<generate for RESOURCES(Type == "mutex")>>
-extern pthread_mutex_t <<FqnLower>>;
+extern pthread_mutex_t <<NameLower>>_s;
+extern pthread_mutex_t *<<NameLower>>;
 <<end generate>>
 
 <<generate for RESOURCES(Type == "cond")>>
-extern pthread_cond <<FqnLower>>;
+extern pthread_cond <<NameLower>>_s;
+extern pthread_cond *<<NameLower>>;
 <<end generate>>
 
 

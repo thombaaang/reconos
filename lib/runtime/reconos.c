@@ -7,15 +7,16 @@
  *
  * ======================================================================
  *
- *   title:        ReconOS library - Main library
+ *   title:        Runtime library
  *
  *   project:      ReconOS
  *   author:       Andreas Agne, University of Paderborn
  *                 Markus Happe, University of Paderborn
- *                 Daniel Borkmann, ETH Zürich
  *                 Sebastian Meisner, University of Paderborn
  *                 Christoph Rüthing, University of Paderborn
- *   description:  Main ReconOS library
+ *   description:  ReconOS runtime library managing all threads and
+ *                 internal data structures. It provides functions
+ *                 to manipulate the state of the system.
  *
  * ======================================================================
  */
@@ -23,7 +24,7 @@
 #include "reconos.h"
 #include "private.h"
 #include "arch/arch.h"
-#include "legacy_os_calls/mbox.h"
+#include "comp/mbox.h"
 
 #include <unistd.h>
 #include <signal.h>
@@ -1047,7 +1048,7 @@ void *dt_delegate(void *arg) {
 				break;
 		}
 
-		debug("[reconos-dt-%d] executed command 0x%x with status %d\n", slot->id, cmd, ret);
+		debug("[reconos-dt-%d] executed command 0x%x\n", slot->id, cmd);
 	}
 
 return NULL;

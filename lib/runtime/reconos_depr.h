@@ -7,7 +7,7 @@
  *
  * ======================================================================
  *
- *   title:        ReconOS library - ReconOS Deprecated functions
+ *   title:        Deprecated functions
  *
  *   project:      ReconOS
  *   author:       Andreas Agne, University of Paderborn

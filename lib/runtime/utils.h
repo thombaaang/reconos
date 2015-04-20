@@ -7,15 +7,14 @@
  *
  * ======================================================================
  *
- *   title:        ReconOS library - Utils
+ *   title:        Utilities
  *
  *   project:      ReconOS
  *   author:       Andreas Agne, University of Paderborn
  *                 Markus Happe, University of Paderborn
- *                 Daniel Borkmann, ETH Zürich
  *                 Sebastian Meisner, University of Paderborn
  *                 Christoph Rüthing, University of Paderborn
- *   description:  Some simple helper funtions
+ *   description:  Some simple helper funtions used internally.
  *
  * ======================================================================
  */

@@ -7,12 +7,14 @@
  *
  * ======================================================================
  *
- *   title:        ReconOS library - ReconOS Main header
+ *   title:        Runtime library
  *
  *   project:      ReconOS
  *   author:       Andreas Agne, University of Paderborn
  *                 Christoph Rüthing, University of Paderborn
- *   description:  Main header file including general functions.
+ *   description:  ReconOS runtime library managing all threads and
+ *                 internal data structures. It provides functions
+ *                 to manipulate the state of the system.
  *
  * ======================================================================
  */

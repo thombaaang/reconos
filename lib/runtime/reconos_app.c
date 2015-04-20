@@ -7,12 +7,14 @@
  *
  * ======================================================================
  *
- *   title:        ReconOS library - ReconOS Main header
+ *   title:        Application library
  *
  *   project:      ReconOS
  *   author:       Andreas Agne, University of Paderborn
  *                 Christoph Rüthing, University of Paderborn
- *   description:  Auto-generated application specific header file.
+ *   description:  Auto-generated application specific header file
+ *                 including definitions of all resources and functions
+ *                 to instantiate resources and threads automatically.
  *
  * ======================================================================
  */
@@ -30,24 +32,28 @@
  * @see header
  */
 <<generate for RESOURCES(Type == "mbox")>>
-struct mbox <<FqnLower>>;
+struct mbox <<NameLower>>_s;
+struct mbox *<<NameLower>> = &<<NameLower>>_s;
 <<end generate>>
 
 <<generate for RESOURCES(Type == "sem")>>
-sem_t <<FqnLower>>;
+sem_t <<NameLower>>_s;
+sem_t *<<NameLower>> = &<<NameLower>>_s;
 <<end generate>>
 
 <<generate for RESOURCES(Type == "mutex")>>
-pthread_mutex_t <<FqnLower>>;
+pthread_mutex_t <<NameLower>>_s;
+pthread_mutex_t *<<NameLower>> = &<<NameLower>>_s;
 <<end generate>>
 
 <<generate for RESOURCES(Type == "cond")>>
-pthread_cond <<FqnLower>>;
+pthread_cond <<NameLower>>_s;
+pthread_cond *<<NameLower>> = &<<NameLower>>_s;
 <<end generate>>
 
 <<generate for RESOURCES>>
-struct reconos_resource <<FqnLowerRes>> = {
-	.ptr = &<<FqnLower>>,
+struct reconos_resource <<NameLower>>_res = {
+	.ptr = &<<NameLower>>_s,
 	.type = RECONOS_RESOURCE_TYPE_<<TypeUpper>>
 };
 <<end generate>>
@@ -60,19 +66,19 @@ struct reconos_resource <<FqnLowerRes>> = {
  */
 void reconos_app_init() {
 	<<generate for RESOURCES(Type == "mbox")>>
-	mbox_init(&<<FqnLower>>, <<Args>>);
+	mbox_init(<<NameLower>>, <<Args>>);
 	<<end generate>>
 
 	<<generate for RESOURCES(Type == "sem")>>
-	sem_init(&<<FqnLower>>, <<Args>>);
+	sem_init(<<NameLower>>, <<Args>>);
 	<<end generate>>
 
 	<<generate for RESOURCES(Type == "mutex")>>
-	pthread_mutex_init(&<<FqnLower>>, NULL);
+	pthread_mutex_init(<<NameLower>>, NULL);
 	<<end generate>>
 
 	<<generate for RESOURCES(Type == "cond")>>
-	pthread_cond_init(&<<FqnLower>>, NULL);
+	pthread_cond_init(<<NameLower>>, NULL);
 	<<end generate>>
 }
 
@@ -81,19 +87,19 @@ void reconos_app_init() {
  */
 void reconos_app_cleanup() {
 	<<generate for RESOURCES(Type == "mbox")>>
-	mbox_destroy(&<<FqnLower>>);
+	mbox_destroy(<<NameLower>>);
 	<<end generate>>
 
 	<<generate for RESOURCES(Type == "sem")>>
-	sem_destroy(&<<FqnLower>>);
+	sem_destroy(<<NameLower>>);
 	<<end generate>>
 
 	<<generate for RESOURCES(Type == "mutex")>>
-	pthread_mutex_destroy(&<<FqnLower>>);
+	pthread_mutex_destroy(<<NameLower>>);
 	<<end generate>>
 
 	<<generate for RESOURCES(Type == "cond")>>
-	pthread_cond_destroy(&<<FqnLower>>, NULL);
+	pthread_cond_destroy(<<NameLower>>, NULL);
 	<<end generate>>
 }
 
@@ -129,7 +135,7 @@ struct reconos_thread *reconos_thread_create_hwt_<<Name>>() {
 	return rt;
 }
 
-extern void *<<SwEntry>>(void *data);
+extern void *rt_<<Name>>(void *data);
 
 /*
  * @see header
@@ -145,7 +151,7 @@ struct reconos_thread *reconos_thread_create_swt_<<Name>>() {
 	reconos_thread_setinitdata(rt, 0);
 	reconos_thread_setallowedslots(rt, slots, <<SlotCount>>);
 	reconos_thread_setresourcepointers(rt, resources_<<Name>>, <<ResourceCount>>);
-	reconos_thread_setswentry(rt, <<SwEntry>>);
+	reconos_thread_setswentry(rt, rt_<<Name>>);
 	reconos_thread_create_auto(rt, RECONOS_THREAD_SW);
 
 	return rt;
