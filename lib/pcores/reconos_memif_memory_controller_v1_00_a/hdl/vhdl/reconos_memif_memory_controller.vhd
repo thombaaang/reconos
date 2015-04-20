@@ -93,7 +93,9 @@ entity reconos_memif_memory_controller is
 		M_AXI_AWCACHE : out std_logic_vector(3 downto 0);
 		M_AXI_ARCACHE : out std_logic_vector(3 downto 0);
 		M_AXI_AWUSER  : out std_logic_vector(4 downto 0);
-		M_AXI_ARUSER  : out std_logic_vector(4 downto 0)
+		M_AXI_ARUSER  : out std_logic_vector(4 downto 0);
+
+		DEBUG : out std_logic_vector(67 downto 0)
 	);
 end entity reconos_memif_memory_controller;
 
@@ -133,7 +135,14 @@ architecture imp of reconos_memif_memory_controller is
 	signal ip2bus_mstwr_src_dsc_n : std_logic;
 	signal bus2ip_mstwr_dst_rdy_n : std_logic;
 	signal bus2ip_mstwr_dst_dsc_n : std_logic;
-	
+
+	signal MEMIF_Hwt2Mem_In_Data_d  : std_logic_vector(31 downto 0);
+	signal MEMIF_Hwt2Mem_In_Empty_d : std_logic;
+	signal MEMIF_Hwt2Mem_In_RE_d    : std_logic;
+
+	signal MEMIF_Mem2Hwt_In_Data_d  : std_logic_vector(31 downto 0);
+	signal MEMIF_Mem2Hwt_In_Full_d  : std_logic;
+	signal MEMIF_Mem2Hwt_In_WE_d    : std_logic;
 begin
 
 	-- == Static assignemnts of signals ===================================
@@ -145,6 +154,20 @@ begin
 
 	bus2ip_clk    <= M_AXI_ACLK;
 	bus2ip_resetn <= M_AXI_ARESETN;
+
+	MEMIF_Hwt2Mem_In_Data_d  <= MEMIF_Hwt2Mem_In_Data;
+	MEMIF_Hwt2Mem_In_Empty_d <= MEMIF_Hwt2Mem_In_Empty;
+	MEMIF_Hwt2Mem_In_RE      <= MEMIF_Hwt2Mem_In_RE_d;
+	MEMIF_Mem2Hwt_In_Data    <= MEMIF_Mem2Hwt_In_Data_d;
+	MEMIF_Mem2Hwt_In_Full_d  <= MEMIF_Mem2Hwt_In_Full;
+	MEMIF_Mem2Hwt_In_WE      <= MEMIF_Mem2Hwt_In_WE_d;
+
+	DEBUG(67 downto 36) <= MEMIF_Hwt2Mem_In_Data_d;
+	DEBUG(35) <= MEMIF_Hwt2Mem_In_Empty_d;
+	DEBUG(34) <= MEMIF_Hwt2Mem_In_RE_d;
+	DEBUG(33 downto 2) <= MEMIF_Mem2Hwt_In_Data_d;
+	DEBUG(1) <= MEMIF_Mem2Hwt_In_Full_d;
+	DEBUG(0) <= MEMIF_Mem2Hwt_In_WE_d;
 
 
 	-- == Instantiation of components =====================================
@@ -230,13 +253,13 @@ begin
 	--
 	ul : entity reconos_memif_memory_controller_v1_00_a.user_logic
 		port map (
-			MEMIF_Hwt2Mem_In_Data  => MEMIF_Hwt2Mem_In_Data,
-			MEMIF_Hwt2Mem_In_Empty => MEMIF_Hwt2Mem_In_Empty,
-			MEMIF_Hwt2Mem_In_RE    => MEMIF_Hwt2Mem_In_RE,
+			MEMIF_Hwt2Mem_In_Data  => MEMIF_Hwt2Mem_In_Data_d,
+			MEMIF_Hwt2Mem_In_Empty => MEMIF_Hwt2Mem_In_Empty_d,
+			MEMIF_Hwt2Mem_In_RE    => MEMIF_Hwt2Mem_In_RE_d,
 
-			MEMIF_Mem2Hwt_In_Data  => MEMIF_Mem2Hwt_In_Data,
-			MEMIF_Mem2Hwt_In_Full  => MEMIF_Mem2Hwt_In_Full,
-			MEMIF_Mem2Hwt_In_WE    => MEMIF_Mem2Hwt_In_WE,
+			MEMIF_Mem2Hwt_In_Data  => MEMIF_Mem2Hwt_In_Data_d,
+			MEMIF_Mem2Hwt_In_Full  => MEMIF_Mem2Hwt_In_Full_d,
+			MEMIF_Mem2Hwt_In_WE    => MEMIF_Mem2Hwt_In_WE_d,
 
 			BUS2IP_Clk             => bus2ip_clk,
 			BUS2IP_Resetn          => bus2ip_resetn,

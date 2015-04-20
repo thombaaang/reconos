@@ -619,7 +619,7 @@ package reconos_pkg is
 	);
 
 	--
-	-- Gets the pointer to the initialization data of the hardware thread
+	-- Gets the pointer to the initialization data of the ReconOS thread
 	-- specified by reconos_hwt_setinitdata.
 	--
 	--   i_osif - i_osif_t record
@@ -635,7 +635,7 @@ package reconos_pkg is
 	);
 
 	--
-	-- Terminates the current hardware thread.
+	-- Terminates the current ReconOS thread.
 	--
 	--   i_osif - i_osif_t record
 	--   o_osif - o_osif_t record
@@ -680,7 +680,10 @@ package reconos_pkg is
 	);
 
 	--
-	-- Writes several words from the local ram into the main memory.
+ 	-- Writes several words from the local ram into main memory. Therefore,
+ 	-- divides a large request into smaller ones of length at most
+ 	-- MEMIF_CHUNK_BYTES and splits request at page borders to guarantee
+ 	-- correct address translation.
 	--
 	--   i_ram    - i_ram_t record
 	--   o_ram    - o_ram_t record
@@ -703,7 +706,10 @@ package reconos_pkg is
 	);
 
 	--
-	-- Writes several words from the local ram into the main memory.
+ 	-- Reads several words from the main memory into the local ram. Therefore,
+ 	-- divides a large request into smaller ones of length at most
+ 	-- MEMIF_CHUNK_BYTES and splits request at page borders to guarantee
+ 	-- correct address translation.
 	--
 	--   i_ram    - i_ram_t record
 	--   o_ram    - o_ram_t record
