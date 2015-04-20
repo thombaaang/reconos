@@ -1,6 +1,5 @@
 <<reconos_preproc>>
 
-PRJ = <<SWDIR>>
 CC = $(CROSS_COMPILE)gcc
 CFLAGS += -Wall -I <<REPO_REL>> -I lib/include -D RECONOS_OS_<<OS>> -D RECONOS_BOARD_<<BOARD>> <<CFLAGS>>
 LDFLAGS += -static -lpthread <<LDFLAGS>>
@@ -21,4 +20,8 @@ clean:
 
 _build/%.o: %.c
 	$(MKDIRP) $(@D)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -x c -c $< -o $@
+
+_build/%.o: %.cpp
+	$(MKDIRP) $(@D)
+	$(CC) $(CFLAGS) -x c -c $< -o $@
