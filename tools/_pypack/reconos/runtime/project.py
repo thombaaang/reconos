@@ -13,6 +13,7 @@
 # ======================================================================
 
 import reconos.utils.shutil2 as shutil2
+import reconos.utils.template as template
 
 import logging
 import configparser
@@ -43,6 +44,9 @@ class Clock:
 					oopt = o
 
 		return (mopt, oopt, infreq * mopt // oopt)
+
+	def get_periodns(self):
+		return 1000000000 / self.freq
 
 	def __str__(self):
 		return "Clock '" + self.name + "'"
@@ -93,21 +97,24 @@ class Thread:
 	_id = 0
 
 	def __init__(self, name, slots, hw, sw, res):
+		hw = hw.split(",")
+		sw = sw.split(",")
+
 		self.Id = Thread._id
 		Thread._id += 1
-		Thread.name = name
-		Thread.slots = slots
-		Thread.hwsource = hw
-		Thread.swsource = sw
-		Thread.resources = res
+		self.name = name
+		self.slots = slots
+		self.hwsource = hw[0]
+		self.hwoptions = hw[1:]
+		self.swsource = sw[0]
+		self.swoptions = sw[1:]
+		self.resources = res
 
 	def get_corename(self):
-		reg = r"(?P<name>[a-zA-Z0-9_]*)_(?P<vers>v[0-9]+_[0-9]{2}_[a-z])"
-		return re.search(reg, self.hwsource).group("name")
+		return "rt_" + self.name.lower()
 
 	def get_coreversion(self):
-		reg = r"(?P<name>[a-zA-Z0-9_]*)_(?P<vers>v[0-9]+_[0-9]{2}_[a-z])"
-		return re.search(reg, self.hwsource).group("vers").replace("_", ".")[1:]
+		return "1.00.a"
 
 	def get_swentry(self):
 		if self.swsource is None or self.swsource == "":
@@ -122,6 +129,24 @@ class Thread:
 	def __repr__(self):
 		return "'" + self.name + "' (" + str(self.id) + ")"
 
+#
+# Class representing implementation related information.
+#
+class ImpInfo:
+	#
+	# Initialization of a new ImpInfo
+	#
+	def __init__(self):
+		self.repo = ""
+
+		self.board = ""
+		self.part = ""
+		self.design = ""
+		self.xil = ""
+
+		self.os = ""
+		self.cflags = ""
+		self.ldflags = ""
 
 #
 # Class representing a project and providing different functionality
@@ -138,41 +163,33 @@ class Project:
 		self.slots = []
 		self.threads = []
 
+		self.impinfo = ImpInfo()
+
 		self.dir = ""
 		self.name = ""
-		self.board = ""
-		self.refdesign = ""
-		self.os = ""
-		self.ise = ""
 		self.clock = None
-		self.cflags = ""
-		self.ldflags = ""
-
-
 
 		if repo is not None and shutil2.isdir(repo):
-			self.repo = repo
+			self.impinfo.repo = repo
 		elif shutil2.environ("RECONOS"):
-			self.repo = shutil2.environ("RECONOS")
+			self.impinfo.repo = shutil2.environ("RECONOS")
 		else:
 			log.error("ReconOS repository not found")
 
-	def get_hwref(self):
-		os = str(self.os)
-		board = "_".join(self.board)
-		refdesign = self.refdesign
-		ise = self.ise
+	def get_template(self, name):
+		return shutil2.join(self.impinfo.repo, "templates", name)
 
-		ref = "zynq_" + os + "_" + board + "_" + refdesign + "_" + ise
-		return shutil2.join(self.repo, "designs", ref)
+	def apply_template(self, name, dictionary, output, link = False):
+		shutil2.mkdir(output)
+		shutil2.copytree(self.get_template(name), output, followlinks=True)
+		template.generate(output, dictionary, "overwrite", link)
 
-	def get_swref(self):
-		os = str(self.os)
 
-		return shutil2.join(self.repo, os, "project")
+	def get_hwtref(self, thread):
+		return shutil2.join(self.impinfo.repo, "templates", "export_hw", self.impinfo.xil[0], "thread_" + thread.hwsource)
 
-	def get_simref(self):
-		return shutil2.join(self.repo, "testbench")
+	def get_swtref(self, thread):
+		return shutil2.join(self.impinfo.repo, "templates", "export_sw", "thread_" + thread.swsource)
 
 
 	#
@@ -207,19 +224,20 @@ class Project:
 	#
 	def _parse_project(self, cfg):
 		self.name = cfg.get("General", "Name")
-		self.board = re.split(r"[, ]+", cfg.get("General", "TargetBoard"))
-		self.refdesign = cfg.get("General", "ReferenceDesign")
-		self.os = cfg.get("General", "TargetOS")
-		self.ise = cfg.get("General", "TargetISE")
+		self.impinfo.board = re.split(r"[, ]+", cfg.get("General", "TargetBoard"))
+		self.impinfo.part = cfg.get("General", "TargetPart")
+		self.impinfo.design = cfg.get("General", "ReferenceDesign")
+		self.impinfo.os = cfg.get("General", "TargetOS")
+		self.impinfo.xil = cfg.get("General", "TargetXil").split(",")
 		if cfg.has_option("General", "CFlags"):
-			self.cflags = cfg.get("General", "CFlags")
+			self.impinfo.cflags = cfg.get("General", "CFlags")
 		else:
-			self.cflags = ""
+			self.impinfo.cflags = ""
 		if cfg.has_option("General", "LdFlags"):
-			self.ldflags = cfg.get("General", "LdFlags")
+			self.impinfo.ldflags = cfg.get("General", "LdFlags")
 		else:
-			self.ldflags = ""
-		log.debug("Found project '" + str(self.name) + "' (" + str(self.board) + "," + str(self.os) + ")")
+			self.impinfo.ldflags = ""
+		log.debug("Found project '" + str(self.name) + "' (" + str(self.impinfo.board) + "," + str(self.impinfo.os) + ")")
 
 		self._parse_clocks(cfg)
 		self._parse_resources(cfg)

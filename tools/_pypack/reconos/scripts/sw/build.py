@@ -1,5 +1,5 @@
 import reconos.utils.shutil2 as shutil2
-import reconos.utils.preproc as preproc
+import reconos.utils.template as template
 
 import logging
 import argparse
@@ -11,13 +11,16 @@ def get_cmd(prj):
 	return "build_sw"
 
 def get_call(prj):
-	return build
+	return build_cmd
 
 def get_parser(prj):
 	parser = argparse.ArgumentParser("build_sw", description="""
 		Builds the software project and generates an executable.
 		""")
 	return parser
+
+def build_cmd(args):
+	build(args)
 
 def build(args):
 	prj = args.prj

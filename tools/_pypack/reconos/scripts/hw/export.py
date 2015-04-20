@@ -1,8 +1,11 @@
 import reconos.utils.shutil2 as shutil2
-import reconos.utils.preproc as preproc
+import reconos.utils.template as template
 
 import logging
 import argparse
+
+import tempfile
+import subprocess
 
 log = logging.getLogger(__name__)
 
@@ -10,21 +13,40 @@ def get_cmd(prj):
 	return "export_hw"
 
 def get_call(prj):
-	return export_xil_ise
+	return export_hw_cmd
 
 def get_parser(prj):
 	parser = argparse.ArgumentParser("export_hw", description="""
 		Exports the hardware project and generates all necessary files.
 		""")
 	parser.add_argument("-l", "--link", help="link sources instead of copying", action="store_true")
+	parser.add_argument("-t", "--thread", help="export only single thread")
 	parser.add_argument("hwdir", help="alternative export directory", nargs="?")
 	return parser
 
-def export_xil_ise(args):
-	prj = args.prj
-	hwdir = args.hwdir if args.hwdir is not None else prj.basedir + ".hw"
+def export_hw_cmd(args):
+	if args.thread is None:
+		export_hw(args, args.hwdir, args.link)
+	else:
+		export_hw_thread(args, args.hwdir, args.link, args.thread)
 
-	log.info("Export hardware to project directory '" + hwdir + "'")
+def export_hw(args, hwdir, link):
+	if args.prj.impinfo.xil[0] == "ise":
+		export_hw_ise(args, hwdir, link)
+	else:
+		log.error("Xilinx tool not supported")
+
+def export_hw_thread(args, hwdir, link, thread):
+	if args.prj.impinfo.xil[0] == "ise":
+		export_hw_thread_ise(args, hwdir, link, thread)
+	else:
+		log.error("Xilinx tool not supported")
+
+def export_hw_ise(args, hwdir, link):
+	prj = args.prj
+	hwdir = hwdir if hwdir is not None else prj.basedir + ".hw"
+
+	log.info("Export hardware to directory '" + hwdir + "'")
 
 	dictionary = {}
 	dictionary["NUM_SLOTS"] = len(prj.slots)
@@ -51,36 +73,115 @@ def export_xil_ise(args):
 		d["O"] = param[1]
 
 		dictionary["CLOCKS"].append(d)
-	dictionary["RESOURCES"] = []
-	i = 0
+
+	log.info("Generating export files ...")
+	tmpl = "ref_" + prj.impinfo.os + "_" + "_".join(prj.impinfo.board) + "_" + prj.impinfo.design + "_" + prj.impinfo.xil[1]
+	prj.apply_template(tmpl, dictionary, hwdir, link)
+
+	log.info("Generating threads ...")
 	for t in prj.threads:
-		for r in t.resources:
+		export_hw_thread(args, shutil2.join(hwdir, "pcores"), link, t.name)
+
+def export_hw_thread_ise(args, hwdir, link, thread):
+	prj = args.prj
+	hwdir = hwdir if hwdir is not None else prj.basedir + ".hw" + "." + thread.lower()
+
+	log.info("Exporting thread " + thread + " to directory '" + hwdir + "'")
+
+	threads = [_ for _ in prj.threads if _.name == thread]
+	if (len(threads) == 1):
+		thread = threads[0]
+
+		if thread.hwsource is None:
+			log.error("No hardware source specified")
+	else:
+		log.error("Thread '" + thread  + "' not found")
+		return
+
+	if thread.hwsource == "vhdl":
+		dictionary = {}
+		dictionary["NAME"] = thread.name.lower();
+		srcs = shutil2.join(prj.dir, "src", "rt_" + thread.name.lower(), thread.hwsource)
+		dictionary["SOURCES"] = [srcs]
+		incls = shutil2.listfiles(srcs, True)
+		dictionary["INCLUDES"] = [{"File": shutil2.trimext(_)} for _ in incls]
+		dictionary["RESOURCES"] = []
+		for i, r in enumerate(thread.resources):
 			d = {}
-			d["FqnUpper"] = (t.name + "_" + r.group + "_" + r.name).upper()
-			d["Id"] = i
-			d["HexId"] = "%08x" % i
+			d["NameUpper"] = (r.group + "_" + r.name).upper()
+			d["NameLower"] = (r.group + "_" + r.name).lower()
+			d["LocalId"] = i
+			d["HexLocalId"] =  "%08x" % i
 			dictionary["RESOURCES"].append(d)
-			i += 1
 
-	log.info("Copying reference design to project folder ...")
-	shutil2.mkdir(hwdir)
-	shutil2.copytree(prj.get_hwref(), hwdir, followlinks=True)
+		log.info("Generating export files ...")
+		prj.apply_template("thread_vhdl_pcore", dictionary, hwdir, link)
 
-	log.info("Copying pcores ...")
-	shutil2.mkdir(shutil2.join(hwdir, "pcores"))
-	shutil2.copytree(shutil2.join(prj.repo, "pcores"),
-	                 shutil2.join(hwdir, "pcores"),
-	                 followlinks=True);
+	elif thread.hwsource == "hls":
+		tmp = tempfile.TemporaryDirectory()
 
-	log.info("Linking sources ...")
-	for t in prj.threads:
-		thread = shutil2.join(prj.dir, "src", t.hwsource)
-		if args.link:
-			shutil2.symlink(thread, shutil2.join(hwdir, "pcores", t.hwsource))
+		dictionary = {}
+		dictionary["PART"] = prj.impinfo.part
+		dictionary["NAME"] = thread.name.lower()
+		dictionary["CLKPRD"] = min([_.clock.get_periodns() for _ in thread.slots])
+		srcs = shutil2.join(prj.dir, "src", "rt_" + thread.name.lower(), thread.hwsource)
+		dictionary["SOURCES"] = [srcs]
+		files = shutil2.listfiles(srcs, True)
+		dictionary["FILES"] = [{"File": _} for _ in files]
+		dictionary["RESOURCES"] = []
+		for i, r in enumerate(thread.resources):
+			d = {}
+			d["NameUpper"] = (r.group + "_" + r.name).upper()
+			d["NameLower"] = (r.group + "_" + r.name).lower()
+			d["LocalId"] = i
+			d["HexLocalId"] =  "%08x" % i
+			d["Type"] = r.type
+			d["TypeUpper"] = r.type.upper()
+			dictionary["RESOURCES"].append(d)
+
+		log.info("Generating temporary HLS project in " + tmp.name + " ...")
+		prj.apply_template("thread_hls_build", dictionary, tmp.name)
+
+		log.info("Starting Vivado HLS ...")
+		if "bbd" in thread.hwoptions:
+			if "vivado" in thread.hwoptions:
+				subprocess.call("""
+				  source /opt/Xilinx/Vivado/2014.4/settings64.sh;
+				  cd {0};
+				  vivado_hls -f script_csynth.tcl;
+				  vivado -mode batch -source script_vivado_edn.tcl;""".format(tmp.name),
+				  shell=True)
+
+				dictionary = {}
+				dictionary["NAME"] = thread.name.lower()
+				srcs = shutil2.join(tmp.name, "rt_imp.edn")
+				dictionary["SOURCES"] = [srcs]
+				incls = ["rt_imp.edn"]
+				dictionary["INCLUDES"] = [{"File": _} for _ in incls]
+			else:
+				log.error("No bbd tool found")
+				return
+
+			log.info("Generating export files ...")
+			prj.apply_template("thread_hls_pcore_bbd", dictionary, hwdir)
+
 		else:
-			shutil2.mkdir(shutil2.join(hwdir, "pcores", t.hwsource))
-			shutil2.copytree(thread, shutil2.join(hwdir, "pcores", t.hwsource))
+			subprocess.call("""
+			  source /opt/Xilinx/Vivado/2014.4/settings64.sh;
+			  cd {0};
+			  vivado_hls -f script_csynth.tcl;""".format(tmp.name),
+			  shell=True)
 
-	log.info("Generating project ...")
-	def pp(f): return preproc.preproc(f, dictionary, "overwrite")
-	shutil2.walk(hwdir, pp)
+			dictionary = {}
+			dictionary["NAME"] = thread.name.lower()
+			srcs = shutil2.join(tmp.name, "hls", "sol", "syn", "vhdl")
+			dictionary["SOURCES"] = [srcs]
+			incls = shutil2.listfiles(srcs, True)
+			dictionary["INCLUDES"] = [{"File": shutil2.trimext(_)} for _ in incls]
+
+			log.info("Generating export files ...")
+			prj.apply_template("thread_hls_pcore_vhdl", dictionary, hwdir)
+
+		shutil2.rmtree("/tmp/test")
+		shutil2.mkdir("/tmp/test")
+		shutil2.copytree(tmp.name, "/tmp/test")

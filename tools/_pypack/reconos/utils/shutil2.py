@@ -14,7 +14,7 @@
 
 import os
 import shutil
-
+import re
 
 def environ(var):
 	if var in os.environ:
@@ -27,6 +27,10 @@ def chdir(path):
 
 def getcwd():
 	return os.getcwd()
+
+def rename(src, dst):
+	if not os.path.exists(dst):
+		os.rename(src, dst)
 
 def join(path, *paths):
 	return os.path.join(path, *paths)
@@ -71,7 +75,7 @@ def listfiles(path, rec=False, ext=None, rel=True):
 	else:
 		ls = [_ for _ in os.listdir(path) if os.path.isfile(os.path.join(path, _))]
 	if ext is not None:
-		ls = [_ for _ in ls if getext(_) == ext]
+		ls = [_ for _ in ls if re.match(ext, getext(_).lstrip('.'))]
 
 	if rel:
 		return [os.path.relpath(_, path) for _ in ls]
@@ -92,39 +96,50 @@ def symlink(src, dst, rel=True):
 		os.symlink(src, dst)
 
 
-def walk(path, func, ext=None, followlinks=False):
+def walk(path, ffunc, dfunc=None, ext=None, followlinks=False):
 	for root, dirs, files in os.walk(path):
 		for f in files:
 			f = os.path.join(root, f)
 			if followlinks or not os.path.islink(f):
 				if ext is None or getext(f) in ext:
-					func(f)
+					ffunc(f)
+
+		if dfunc is not None:
+			for d in dirs:
+				dfunc(os.path.join(root, d), dirs)
+
+def remove(path):
+	if os.path.exists(path):
+		os.remove(path)
 
 def rmtree(path):
 	if os.path.isdir(path):
 		shutil.rmtree(path)
 
 def copytree(src, dst, followlinks=False):
-	for root, dirs, files in os.walk(src, followlinks=followlinks):
-		for d in dirs:
-			src_ = os.path.join(root, d)
-			dst_ = os.path.join(dst, os.path.relpath(root, src), d)
-			if os.path.islink(src_) and not followlinks:
-				#print("Copying symlink '" + src_ + "' to '" + dst_ + "'")
-				shutil.copy2(src_, dst_, follow_symlinks=False)
-			else:
-				#print("Making dir '" + dst_ + "'")
-				if not os.path.isdir(dst_):
-					os.mkdir(dst_)
-		for f in files:
-			src_ = os.path.join(root, f)
-			dst_ = os.path.join(dst, os.path.relpath(root, src), f)
-			if os.path.islink(src_) and not followlinks:
-				#print("Copying symlink '" + src_ + "' to '" + dst_ + "'")
-				shutil.copy2(src_, dst_, follow_symlinks=False)
-			else:
-				#print("Copying '" + src_ + "' to '" + dst_ + "'")
-				shutil.copy2(src_, dst_)
+	if os.path.isfile(src):
+		shutil.copy2(src, dst, follow_symlinks=followlinks)
+	else:
+		for root, dirs, files in os.walk(src, followlinks=followlinks):
+			for d in dirs:
+				src_ = os.path.join(root, d)
+				dst_ = os.path.join(dst, os.path.relpath(root, src), d)
+				if os.path.islink(src_) and not followlinks:
+					#print("Copying symlink '" + src_ + "' to '" + dst_ + "'")
+					shutil.copy2(src_, dst_, follow_symlinks=False)
+				else:
+					#print("Making dir '" + dst_ + "'")
+					if not os.path.isdir(dst_):
+						os.mkdir(dst_)
+			for f in files:
+				src_ = os.path.join(root, f)
+				dst_ = os.path.join(dst, os.path.relpath(root, src), f)
+				if os.path.islink(src_) and not followlinks:
+					#print("Copying symlink '" + src_ + "' to '" + dst_ + "'")
+					shutil.copy2(src_, dst_, follow_symlinks=False)
+				else:
+					#print("Copying '" + src_ + "' to '" + dst_ + "'")
+					shutil.copy2(src_, dst_)
 
 def linktree(src, dst):
 	for x in os.listdir(src):

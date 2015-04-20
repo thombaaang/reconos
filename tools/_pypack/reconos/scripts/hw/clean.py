@@ -10,7 +10,7 @@ def get_cmd(prj):
 	return "clean_hw"
 
 def get_call(prj):
-	return clean_xil_ise
+	return clean_ise_cmd
 
 def get_parser(prj):
 	parser = argparse.ArgumentParser("clean_hw", description="""
@@ -19,9 +19,10 @@ def get_parser(prj):
 	parser.add_argument("-r", "--remove", help="remove entire hardware directory", action="store_true")
 	return parser
 
+def clean_ise_cmd(args):
+	clean_ise(args)
 
-
-def clean_xil_ise(args):
+def clean_ise(args):
 	prj = args.prj
 	hwdir = prj.basedir + ".hw"
 

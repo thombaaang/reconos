@@ -10,7 +10,7 @@ def get_cmd(prj):
 	return "clean_sw"
 
 def get_call(prj):
-	return clean
+	return clean_cmd
 
 def get_parser(prj):
 	parser = argparse.ArgumentParser("clean_sw", description="""
@@ -18,6 +18,9 @@ def get_parser(prj):
 		""")
 	parser.add_argument("-r", "--remove", help="remove entire software directory", action="store_true")
 	return parser
+
+def clean_cmd(args):
+	clean(args)
 
 def clean(args):
 	prj = args.prj

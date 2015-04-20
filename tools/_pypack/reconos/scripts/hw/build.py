@@ -1,5 +1,5 @@
 import reconos.utils.shutil2 as shutil2
-import reconos.utils.preproc as preproc
+import reconos.utils.template as template
 
 import logging
 import argparse
@@ -11,7 +11,7 @@ def get_cmd(prj):
 	return "build_hw"
 
 def get_call(prj):
-	return build_xil_ise
+	return build_ise_cmd
 
 def get_parser(prj):
 	parser = argparse.ArgumentParser("build_hw", description="""
@@ -20,7 +20,10 @@ def get_parser(prj):
 		""")
 	return parser
 
-def build_xil_ise(args):
+def build_ise_cmd(args):
+	build_ise(args)
+
+def build_ise(args):
 	prj = args.prj
 	hwdir = prj.basedir + ".hw"
 

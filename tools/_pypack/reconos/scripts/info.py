@@ -7,7 +7,7 @@ def get_cmd(prj):
 	return "info"
 
 def get_call(prj):
-	return info
+	return info_cmd
 
 def get_parser(prj):
 	parser = argparse.ArgumentParser("info", description="""
@@ -15,21 +15,24 @@ def get_parser(prj):
 		""")
 	return parser
 
+def info_cmd(args):
+	info(args)
+
 def info(args):
 	prj = args.prj
 	print("-" * 40)
 	print("ReconOS Project '" + prj.name + "'")
-	print("  Board".ljust(20) + str(prj.board))
-	print("  Reference Design".ljust(20) + prj.refdesign)
-	print("  Operating System".ljust(20) + prj.os)
-	print("  Xilinx ISE".ljust(20) + prj.ise)
-	print("  System Clock".ljust(20) + prj.clock.__repr__())
-	print("  CFlags".ljust(20) + prj.cflags)
-	print("  LdFlags".ljust(20) + prj.ldflags)
+	print("  Board".ljust(20) + str(prj.impinfo.board))
+	print("  Reference Design".ljust(20) + prj.impinfo.design)
+	print("  Part".ljust(20) + prj.impinfo.get_part())
+	print("  Operating System".ljust(20) + prj.impinfo.os)
+	print("  Xilinx Tools".ljust(20) + ",".join(prj.impinfo.xil))
+	print("  CFlags".ljust(20) + prj.impinfo.cflags)
+	print("  LdFlags".ljust(20) + prj.impinfo.ldflags)
 	print("-" * 40)
 	print("Clocks:")
 	for c in prj.clocks:
-		print("  " + c.name.ljust(18) + "[freq=" + str(c.freq // 1000000) + "MHz]")
+		print("  " + (c.name + "*" if c == prj.clock else "").ljust(18) + "[freq=" + str(c.freq // 1000000) + "MHz]")
 	print("Slots:")
 	for s in prj.slots:
 		print("  " + s.name.ljust(18) + "[id=" + str(s.id) + ",clk=" + s.clock.name + "]")

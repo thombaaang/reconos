@@ -1,5 +1,5 @@
 import reconos.utils.shutil2 as shutil2
-import reconos.utils.preproc as preproc
+import reconos.utils.template as template
 
 import logging
 import argparse
@@ -10,80 +10,104 @@ def get_cmd(prj):
 	return "export_sw"
 
 def get_call(prj):
-	return export_xil_ise
+	return export_sw_cmd
 
 def get_parser(prj):
 	parser = argparse.ArgumentParser("export_hw", description="""
 		Exports the software project and generates all necessary files.
 		""")
 	parser.add_argument("-l", "--link", help="link sources instead of copying", default=False, action="store_true")
+	parser.add_argument("-t", "--thread", help="export only single thread")
+	parser.add_argument("swdir", help="alternative export directory", nargs="?")
 	return parser
 
-def export_xil_ise(args):
-	prj = args.prj
-	swdir = prj.basedir + ".sw"
+def export_sw_cmd(args):
+	if (args.thread is None):
+		export_sw(args, args.swdir, args.link)
+	else:
+		export_sw_thread(args, args.swdir, args.link, args.thread)
 
-	logging.info("Export software to project directory '" + prj.dir + "'")
+def export_sw(args, swdir, link):
+	prj = args.prj
+	swdir = swdir if swdir is not None else prj.basedir + ".sw"
+
+	log.info("Export software to project directory '" + prj.dir + "'")
 
 	dictionary = {}
-	dictionary["NUM_SLOTS"] = len(prj.slots)
 	dictionary["NAME"] = prj.name.lower()
-	dictionary["OS"] = prj.os.lower()
-	dictionary["BOARD"] = "_".join(prj.board)
-	dictionary["CFLAGS"] = prj.cflags
-	dictionary["LDFLAGS"] = prj.ldflags
+	dictionary["CFLAGS"] = prj.impinfo.cflags
+	dictionary["LDFLAGS"] = prj.impinfo.ldflags
 	dictionary["THREADS"] = []
-	dictionary["SWDIR"] = swdir
 	for t in prj.threads:
 		d = {}
 		d["Name"] = t.name.lower()
 		d["Slots"] = ",".join([str(_.id) for _ in t.slots])
 		d["SlotCount"] = len(t.slots)
-		d["Resources"] = ",".join([("&" + t.name + "_" + _.group + "_" + _.name).lower() + "_res" for _ in t.resources])
+		d["Resources"] = ",".join(["&" + (_.group + "_" + _.name).lower() + "_res" for _ in t.resources])
 		d["ResourceCount"] = len(t.resources)
-		d["SwEntry"] = t.get_swentry()
 		dictionary["THREADS"].append(d)
 	dictionary["RESOURCES"] = []
-	i = 0
+	for r in prj.resources:
+		d = {}
+		d["NameUpper"] = (r.group + "_" + r.name).upper()
+		d["NameLower"] = (r.group + "_" + r.name).lower()
+		d["Type"] = r.type
+		d["TypeUpper"] = r.type.upper()
+		d["Args"] = ", ".join(r.args)
+		d["Id"] = r.id
+		dictionary["RESOURCES"].append(d)
+	srcs = shutil2.join(prj.dir, "src", "application")
+	dictionary["SOURCES"] = [srcs]
+
+	log.info("Generating export files ...")
+	templ = "app_" + prj.impinfo.os
+	prj.apply_template(templ, dictionary, swdir)
+
+	log.info("Generating threads ...")
 	for t in prj.threads:
-		for r in t.resources:
-			d = {}
-			d["FqnUpper"] = (t.name + "_" + r.group + "_" + r.name).upper()
-			d["FqnLower"] = (t.name + "_" + r.group + "_" + r.name).lower()
-			d["FqnLowerRes"] = (t.name + "_" + r.group + "_" + r.name + "_res").lower()
-			d["Id"] = i
-			d["HexId"] = "%08x" % i
-			d["Type"] = r.type
-			d["TypeUpper"] = r.type.upper()
-			d["Args"] = ", ".join(r.args)
-			dictionary["RESOURCES"].append(d)
-			i += 1
+		export_sw_thread(args, swdir, link, t.name)
 
-	logging.info("Copying reference design to project folder ...")
-	shutil2.mkdir(swdir)
-	shutil2.copytree(prj.get_swref(), swdir, followlinks=True)
-
-	logging.info("Linking sources ...")
-	if args.link:
-		shutil2.linktree(shutil2.join(prj.dir, "src/application"), swdir)
-	else:
-		shutil2.copytree(shutil2.join(prj.dir, "src/application"), swdir)
-
-	for t in prj.threads:
-		if t.swsource is None or t.swsource == "":
-			continue
-
-		thread = shutil2.join(prj.dir, "src", t.swsource)
-		if args.link:
-			shutil2.symlink(thread, shutil2.join(swdir, t.swsource))
-		else:
-			shutil2.mkdir(shutil2.join(swdir, t.swsource))
-			shutil2.copytree(thread, shutil2.join(swdir, t.swsource))
-
-	logging.info("Generating project ...")
-	dictionary["REPO_REL"] = shutil2.relpath(prj.repo, swdir)
+	dictionary = {}
+	dictionary["OS"] = prj.impinfo.os.lower()
+	dictionary["BOARD"] = "_".join(prj.impinfo.board)
+	dictionary["REPO_REL"] = shutil2.relpath(prj.impinfo.repo, swdir)
 	dictionary["OBJS"] = [{"Source": shutil2.trimext(_) + ".o"}
-	                       for _ in shutil2.listfiles(swdir, True, ".c")]
+	                       for _ in shutil2.listfiles(swdir, True, "c[p]*")]
 
-	def pp(f): return preproc.preproc(f, dictionary, "overwrite")
-	shutil2.walk(swdir, pp)
+	template.preproc(shutil2.join(swdir, "Makefile"), dictionary, "overwrite", force=True)
+
+def export_sw_thread(args, swdir, link, thread):
+	prj = args.prj
+	swdir = swdir if swdir is not None else prj.basedir + ".sw" + "." + thread.lower()
+
+	log.info("Exporting thread " + thread + " to directory '" + swdir + "'")
+
+	threads = [_ for _ in prj.threads if _.name == thread]
+	if (len(threads) == 1):
+		thread = threads[0]
+
+		if thread.swsource is None:
+			log.info("No software source specified")
+	else:
+		log.info("Thread '" + thread  + "' not found")
+		return
+
+	dictionary = {}
+	dictionary["NAME"] = prj.name.lower()
+	dictionary["RESOURCES"] = []
+	for i,r in enumerate(thread.resources):
+		d = {}
+		d["NameUpper"] = (r.group + "_" + r.name).upper()
+		d["NameLower"] = (r.group + "_" + r.name).lower()
+		d["LocalId"] = i
+		d["HexLocalId"] =  "%08x" % i
+		d["Type"] = r.type
+		d["TypeUpper"] = r.type.upper()
+		dictionary["RESOURCES"].append(d)
+	dictionary["SOURCES"] = [shutil2.join(prj.dir, "src", "rt_" + thread.name.lower(), thread.swsource)]
+
+	log.info("Generating export files ...")
+	if thread.swsource == "c":
+		prj.apply_template("thread_c_plain", dictionary, swdir, link)
+	elif thread.swsource == "hls":
+		prj.apply_template("thread_c_hls", dictionary, swdir, link)
