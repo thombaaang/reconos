@@ -584,7 +584,7 @@ void hwslot_jointhread(struct hwslot *slot) {
 			break;\
 	}\
 	if (__i == slot->rt->resource_count)\
-		panic("reconos-dt-%d] "\
+		panic("[reconos-dt-%d] "\
 		      "ERROR: resource %d not found\n", slot->id, (p_handle));\
 	\
 	if (slot->rt->resources[(__i)].type != (p_type)) {\
