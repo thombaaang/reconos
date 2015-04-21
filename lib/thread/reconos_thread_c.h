@@ -28,11 +28,11 @@
 /* == Thread resources ================================================= */
 
 /*
- * Definition of resource ids local to this thread. Always use the pointers
- * directory and not resource array indexed by these ids.
+ * Definition of resource ids for resources of this thread. Always use the
+ * pointers directly and not search for id in resource array.
  */
 <<generate for RESOURCES>>
-#define <<NameUpper>> 0x<<HexLocalId>>
+#define <<NameUpper>> 0x<<HexId>>
 <<end generate>>
 
 /* == Thread helper macros ============================================= */

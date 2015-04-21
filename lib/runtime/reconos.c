@@ -39,6 +39,7 @@ static int _proc_control;
 static pthread_t _pgf_handler;
 static struct sigaction _dt_signal;
 static int _thread_id;
+static int _resource_id;
 
 
 /* == ReconOS resource ================================================= */
@@ -48,6 +49,7 @@ static int _thread_id;
  */
 void reconos_resource_init(struct reconos_resource *rr,
                            int type, void *ptr) {
+	rr->id = _resource_id++;
 	rr->type = type;
 	rr->ptr = ptr;
 }
@@ -366,6 +368,7 @@ void reconos_init() {
 	signal(SIGABRT, exit_signal);
 
 	_thread_id = 0;
+	_resource_id = 0;
 
 	reconos_drv_init();
 
@@ -574,15 +577,21 @@ void hwslot_jointhread(struct hwslot *slot) {
 /* == ReconOS delegate ================================================= */
 
 
-#define RESOURCE_CHECK_TYPE(p_handle, p_type) \
-	if ((p_handle) >= slot->rt->resource_count) {\
-		panic("[reconos-dt-%d] "\
-		      "ERROR: resource count out of range\n",slot->id);\
+#define RESOURCE_CHECK_TYPE(p_handle, p_type, p_res) {\
+	int __i;\
+	for (__i = 0; __i < slot->rt->resource_count; __i++) {\
+		if (slot->rt->resources[__i].id == (p_handle))\
+			break;\
 	}\
-	if (slot->rt->resources[(p_handle)].type != (p_type)) {\
+	if (__i == slot->rt->resource_count)\
+		panic("reconos-dt-%d]"\
+		      "ERROR: resource %d not found\n", slot->id, (p_handle));\
+	\
+	if (slot->rt->resources[(__i)].type != (p_type)) {\
 		panic("[reconos-dt-%d] "\
 		      "ERROR: wrong resource type\n", slot->id);\
-	}
+	}\
+	(p_res) = slot->rt->resources[(__i)].ptr;}
 
 #define SYSCALL_NONBLOCK(p_call)\
 	if (slot->dt_flags & DELEGATE_FLAG_PAUSE_SYSCALLS) {\
@@ -627,12 +636,13 @@ static inline int dt_get_init_data(struct hwslot *slot) {
  */
 static inline int dt_sem_post(struct hwslot *slot) {
 	int handle, ret;
+	sem_t *res;
 
 	handle = reconos_osif_read(slot->osif);
-	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_SEM);
+	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_SEM, res);
 
 	debug("[reconos-dt-%d] (sem_post on %d) ...\n", slot->id, handle);
-	SYSCALL_NONBLOCK(ret = sem_post(slot->rt->resources[handle].ptr));
+	SYSCALL_NONBLOCK(ret = sem_post(res));
 	debug("[reconos-dt-%d] (sem_post on %d) done\n", slot->id, handle);
 
 	reconos_osif_write(slot->osif, (uint32_t)ret);
@@ -652,12 +662,13 @@ intr:
  */
 static inline int dt_sem_wait(struct hwslot *slot) {
 	int handle, ret;
+	sem_t *res;
 
 	handle = reconos_osif_read(slot->osif);
-	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_SEM);
+	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_SEM, res);
 
 	debug("[reconos-dt-%d] (sem_wait on %d) ...\n", slot->id, handle);
-	SYSCALL_BLOCK(ret = sem_wait(slot->rt->resources[handle].ptr));
+	SYSCALL_BLOCK(ret = sem_wait(res));
 	debug("[reconos-dt-%d] (sem_wait on %d) done\n", slot->id, handle);
 
 	reconos_osif_write(slot->osif, (uint32_t)ret);
@@ -677,12 +688,13 @@ intr:
  */
 static inline int dt_mutex_lock(struct hwslot *slot) {
 	int handle, ret;
+	pthread_mutex_t *res;
 
 	handle = reconos_osif_read(slot->osif);
-	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_MUTEX);
+	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_MUTEX, res);
 
 	debug("[reconos-dt-%d] (mutex_lock on %d) ...\n", slot->id, handle);
-	SYSCALL_BLOCK(ret = pthread_mutex_lock(slot->rt->resources[handle].ptr));
+	SYSCALL_BLOCK(ret = pthread_mutex_lock(res));
 	debug("[reconos-dt-%d] (mutex_lock on %d) done\n", slot->id, handle);
 
 	reconos_osif_write(slot->osif, (uint32_t)ret);
@@ -702,12 +714,13 @@ intr:
  */
 static inline int dt_mutex_unlock(struct hwslot *slot) {
 	int handle, ret;
+	pthread_mutex_t *res;
 
 	handle = reconos_osif_read(slot->osif);
-	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_MUTEX);
+	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_MUTEX, res);
 
 	debug("[reconos-dt-%d] (mutex_unlock on %d) ...\n", slot->id, handle);
-	SYSCALL_NONBLOCK(ret = pthread_mutex_unlock(slot->rt->resources[handle].ptr));
+	SYSCALL_NONBLOCK(ret = pthread_mutex_unlock(res));
 	debug("[reconos-dt-%d] (mutex_unlock on %d) done\n", slot->id, handle);
 
 	reconos_osif_write(slot->osif, (uint32_t)ret);
@@ -727,12 +740,13 @@ intr:
  */
 static inline uint32_t dt_mutex_trylock(struct hwslot *slot) {
 	int handle, ret;
+	pthread_mutex_t *res;
 
 	handle = reconos_osif_read(slot->osif);
-	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_MUTEX);
+	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_MUTEX, res);
 
 	debug("[reconos-dt-%d] (mutex_trylock on %d) ...\n", slot->id, handle);
-	SYSCALL_NONBLOCK(ret = pthread_mutex_trylock(slot->rt->resources[handle].ptr));
+	SYSCALL_NONBLOCK(ret = pthread_mutex_trylock(res));
 	debug("[reconos-dt-%d] (mutex_trylock on %d) done\n", slot->id, handle);
 
 	reconos_osif_write(slot->osif, (uint32_t)ret);
@@ -753,15 +767,16 @@ intr:
 static inline int dt_cond_wait(struct hwslot *slot) {
 #ifndef RECONOS_MINIMAL
 	int handle, handle2, ret;
+	pthread_cond_t *res;
+	pthread_mutex_t *res2;
 
 	handle = reconos_osif_read(slot->osif);
 	handle2 = reconos_osif_read(slot->osif);
-	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_COND);
-	RESOURCE_CHECK_TYPE(handle2, RECONOS_RESOURCE_TYPE_MUTEX);
+	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_COND, res);
+	RESOURCE_CHECK_TYPE(handle2, RECONOS_RESOURCE_TYPE_MUTEX, res2);
 
 	debug("[reconos-dt-%d] (cond_wait on %d) ...\n", slot->id, handle);
-	SYSCALL_BLOCK(ret = pthread_cond_wait(slot->rt->resources[handle].ptr,
-	                                      slot->rt->resources[handle2].ptr));
+	SYSCALL_BLOCK(ret = pthread_cond_wait(res,res2));
 	debug("[reconos-dt-%d] (cond_wait on %d) done\n", slot->id, handle);
 
 	reconos_osif_write(slot->osif, (uint32_t)ret);
@@ -787,12 +802,13 @@ intr:
 static inline int dt_cond_signal(struct hwslot *slot) {
 #ifndef RECONOS_MINIMAL
 	int handle, ret;
+	pthread_cond_t *res;
 
 	handle = reconos_osif_read(slot->osif);
-	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_COND);
+	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_COND, res);
 
 	debug("[reconos-dt-%d] (cond_signal on %d) ...\n", slot->id, handle);
-	SYSCALL_NONBLOCK(ret = pthread_cond_signal(slot->rt->resources[handle].ptr));
+	SYSCALL_NONBLOCK(ret = pthread_cond_signal(res));
 	debug("[reconos-dt-%d] (cond_signal on %d) done\n", slot->id, handle);
 
 	reconos_osif_write(slot->osif, (uint32_t)ret);
@@ -818,12 +834,13 @@ intr:
 static inline uint32_t dt_cond_broadcast(struct hwslot *slot) {
 #ifndef RECONOS_MINIMAL
 	int handle, ret;
+	pthread_cond_t *res;
 
 	handle = reconos_osif_read(slot->osif);
-	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_COND);
+	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_COND, res);
 
 	debug("[reconos-dt-%d] (cond_broadcast on %d) ...\n", slot->id, handle);
-	SYSCALL_NONBLOCK(ret = pthread_cond_broadcast(slot->rt->resources[handle].ptr));
+	SYSCALL_NONBLOCK(ret = pthread_cond_broadcast(res));
 	debug("[reconos-dt-%d] (cond_broadcast on %d) done\n", slot->id, handle);
 
 	reconos_osif_write(slot->osif, (uint32_t)ret);
@@ -849,12 +866,13 @@ intr:
 static inline int dt_mbox_get(struct hwslot *slot) {
 	int handle, ret;
 	uint32_t msg;
+	struct mbox *res;
 
 	handle = reconos_osif_read(slot->osif);
-	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_MBOX);
+	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_MBOX, res);
 
 	debug("[reconos-dt-%d] (mbox_get on %d) ...\n", slot->id, handle);
-	SYSCALL_BLOCK(ret = mbox_get_interruptible(slot->rt->resources[handle].ptr, &msg));
+	SYSCALL_BLOCK(ret = mbox_get_interruptible(res, &msg));
 	debug("[reconos-dt-%d] (mbox_get on %d) done\n", slot->id, handle);
 
 	reconos_osif_write(slot->osif, msg);
@@ -875,14 +893,15 @@ intr:
 static inline int dt_mbox_put(struct hwslot *slot) {
 	int handle, ret;
 	uint32_t arg0;
+	struct mbox *res;
 
 	handle = reconos_osif_read(slot->osif);
-	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_MBOX);
+	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_MBOX, res);
 
 	arg0 = reconos_osif_read(slot->osif);
 
 	debug("[reconos-dt-%d] (mbox_put on %d) ...\n", slot->id, handle);
-	SYSCALL_NONBLOCK(ret = mbox_put(slot->rt->resources[handle].ptr, arg0));
+	SYSCALL_NONBLOCK(ret = mbox_put(res, arg0));
 	debug("[reconos-dt-%d] (mbox_put on %d) done\n", slot->id, handle);
 
 	reconos_osif_write(slot->osif, (uint32_t)ret);
@@ -903,12 +922,13 @@ intr:
 static inline int dt_mbox_tryget(struct hwslot *slot) {
 	int handle, ret;
 	uint32_t data;
+	struct mbox *res;
 
 	handle = reconos_osif_read(slot->osif);
-	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_MBOX);
+	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_MBOX, res);
 
 	debug("[reconos-dt-%d] (mbox_tryget on %d) ...\n", slot->id, handle);
-	SYSCALL_NONBLOCK(ret = mbox_tryget(slot->rt->resources[handle].ptr, &data));
+	SYSCALL_NONBLOCK(ret = mbox_tryget(res, &data));
 	reconos_osif_write(slot->osif, data);
 	debug("[reconos-dt-%d] (mbox_tryget on %d) done\n", slot->id, handle);
 
@@ -930,14 +950,15 @@ intr:
 static inline int dt_mbox_tryput(struct hwslot *slot) {
 	int handle, ret;
 	uint32_t arg0;
+	struct mbox *res;
 
 	handle = reconos_osif_read(slot->osif);
-	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_MBOX);
+	RESOURCE_CHECK_TYPE(handle, RECONOS_RESOURCE_TYPE_MBOX, res);
 
 	arg0 = reconos_osif_read(slot->osif);
 
 	debug("[reconos-dt-%d] (mbox_tryput on %d) ...\n", slot->id, handle);
-	SYSCALL_NONBLOCK(ret = mbox_tryput(slot->rt->resources[handle].ptr, arg0));
+	SYSCALL_NONBLOCK(ret = mbox_tryput(res, arg0));
 	debug("[reconos-dt-%d] (mbox_tryput on %d) done\n", slot->id, handle);
 
 	reconos_osif_write(slot->osif, (uint32_t)ret);

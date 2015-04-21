@@ -55,6 +55,7 @@ def export_sw(args, swdir, link):
 		d["TypeUpper"] = r.type.upper()
 		d["Args"] = ", ".join(r.args)
 		d["Id"] = r.id
+		d["HexId"] = "%08x" % r.id
 		dictionary["RESOURCES"].append(d)
 	srcs = shutil2.join(prj.dir, "src", "application")
 	dictionary["SOURCES"] = [srcs]
@@ -99,6 +100,8 @@ def export_sw_thread(args, swdir, link, thread):
 		d = {}
 		d["NameUpper"] = (r.group + "_" + r.name).upper()
 		d["NameLower"] = (r.group + "_" + r.name).lower()
+		d["Id"] = r.id
+		d["HexId"] = "%08x" % r.id
 		d["LocalId"] = i
 		d["HexLocalId"] =  "%08x" % i
 		d["Type"] = r.type

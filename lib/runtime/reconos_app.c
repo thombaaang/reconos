@@ -47,12 +47,13 @@ pthread_mutex_t *<<NameLower>> = &<<NameLower>>_s;
 <<end generate>>
 
 <<generate for RESOURCES(Type == "cond")>>
-pthread_cond <<NameLower>>_s;
-pthread_cond *<<NameLower>> = &<<NameLower>>_s;
+pthread_cond_t <<NameLower>>_s;
+pthread_cond_t *<<NameLower>> = &<<NameLower>>_s;
 <<end generate>>
 
 <<generate for RESOURCES>>
 struct reconos_resource <<NameLower>>_res = {
+	.id = 0x<<HexId>>,
 	.ptr = &<<NameLower>>_s,
 	.type = RECONOS_RESOURCE_TYPE_<<TypeUpper>>
 };

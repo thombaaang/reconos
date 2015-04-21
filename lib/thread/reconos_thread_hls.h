@@ -34,7 +34,7 @@
  * resource objects.
  */
 <<generate for RESOURCES>>
-#define <<NameLower>> 0x<<HexLocalId>>
+#define <<NameLower>> 0x<<HexId>>
 <<end generate>>
 
 

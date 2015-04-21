@@ -46,10 +46,12 @@ extern int RECONOS_NUM_HWTS;
 /*
  * Object representing a single resource.
  *
+ *   id   - id of resource
  *   type - type of the resource (RECONOS_RESOURCE_TYPE_...)
  *   ptr  - pointer to the representation of the resource
  */
 struct reconos_resource {
+	int id;
 	int type;
 	void *ptr;
 };

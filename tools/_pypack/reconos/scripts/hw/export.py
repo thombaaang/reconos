@@ -110,6 +110,8 @@ def export_hw_thread_ise(args, hwdir, link, thread):
 			d = {}
 			d["NameUpper"] = (r.group + "_" + r.name).upper()
 			d["NameLower"] = (r.group + "_" + r.name).lower()
+			d["Id"] = r.id
+			d["HexId"] = "%08x" % r.id
 			d["LocalId"] = i
 			d["HexLocalId"] =  "%08x" % i
 			dictionary["RESOURCES"].append(d)
@@ -133,6 +135,8 @@ def export_hw_thread_ise(args, hwdir, link, thread):
 			d = {}
 			d["NameUpper"] = (r.group + "_" + r.name).upper()
 			d["NameLower"] = (r.group + "_" + r.name).lower()
+			d["Id"] = r.id
+			d["HexId"] = "%08x" % r.id
 			d["LocalId"] = i
 			d["HexLocalId"] =  "%08x" % i
 			d["Type"] = r.type

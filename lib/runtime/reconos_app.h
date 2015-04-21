@@ -55,8 +55,8 @@ extern pthread_mutex_t *<<NameLower>>;
 <<end generate>>
 
 <<generate for RESOURCES(Type == "cond")>>
-extern pthread_cond <<NameLower>>_s;
-extern pthread_cond *<<NameLower>>;
+extern pthread_cond_t <<NameLower>>_s;
+extern pthread_cond_t *<<NameLower>>;
 <<end generate>>
 
 
