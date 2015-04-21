@@ -53,7 +53,9 @@ void merge(uint32_t *data, int data_count) {
 
 	for (bs = BLOCK_SIZE; bs < data_count; bs += bs) {
 		for (bi = 0; bi < data_count; bi += bs + bs) {
-			if (bi + bs + bs > data_count) {
+			if (bi + bs > data_count) {
+				// block smaller block size
+			} else if (bi + bs + bs > data_count) {
 				_merge(data + bi, tmp, bs, data_count - bi - bs);
 			} else {
 				_merge(data + bi, tmp, bs, bs);
@@ -126,12 +128,10 @@ int main(int argc, char **argv) {
 	log("\n");
 	t_sort = timer_get() - t_start;
 
-#if 1
 	t_start = timer_get();
 	log("merging sorted data slices ...\n");
 	merge(data, data_count);
 	t_merge = timer_get() - t_start;
-#endif
 
 	t_start = timer_get();
 	log("checking sorted data ...\n");
