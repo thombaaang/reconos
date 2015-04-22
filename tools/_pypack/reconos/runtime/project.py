@@ -97,18 +97,25 @@ class Thread:
 	_id = 0
 
 	def __init__(self, name, slots, hw, sw, res):
-		hw = hw.split(",")
-		sw = sw.split(",")
-
 		self.Id = Thread._id
 		Thread._id += 1
 		self.name = name
 		self.slots = slots
-		self.hwsource = hw[0]
-		self.hwoptions = hw[1:]
-		self.swsource = sw[0]
-		self.swoptions = sw[1:]
 		self.resources = res
+		if hw is not None:
+			hw = hw.split(",")
+			self.hwsource = hw[0]
+			self.hwoptions = hw[1:]
+		else:
+			self.hwsource = None
+			self.hwoptions = []
+		if sw is not None:
+			sw = sw.split(",")
+			self.swsource = sw[0]
+			self.swoptions = sw[1:]
+		else:
+			self.swsource = None
+			self.swoptions = []
 
 	def get_corename(self):
 		return "rt_" + self.name.lower()
@@ -327,17 +334,20 @@ class Project:
 				log.error("Thread must have a name")
 
 			name = match.group("name")
-			slots = cfg.get(t, "Slot")
-			slots = slots.replace("(", "\\(")
-			slots = slots.replace(")", "\\)")
-			slots = slots.replace(",", "|")
-			slots = slots.replace("*", ".*")
-			slots = [_ for _ in self.slots if re.match(slots, _.name) is not None]
+			if cfg.has_option(t, "Slot"):
+				slots = cfg.get(t, "Slot")
+				slots = slots.replace("(", "\\(")
+				slots = slots.replace(")", "\\)")
+				slots = slots.replace(",", "|")
+				slots = slots.replace("*", ".*")
+				slots = [_ for _ in self.slots if re.match(slots, _.name) is not None]
+			else:
+				slots = []
 			if cfg.has_option(t, "HwSource"):
 				hw = cfg.get(t, "HwSource")
 			else:
 				hw = None
-				log.error("No HwSource found")
+				log.info("No HwSource found")
 			if cfg.has_option(t, "SwSource"):
 				sw = cfg.get(t, "SwSource")
 			else:

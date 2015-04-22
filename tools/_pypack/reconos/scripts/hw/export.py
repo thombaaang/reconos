@@ -55,13 +55,14 @@ def export_hw_ise(args, hwdir, link):
 	dictionary["SYSRST"] = "SYSRESET"
 	dictionary["SLOTS"] = []
 	for s in prj.slots:
-		d = {}
-		d["HwtCoreName"] = s.threads[0].get_corename()
-		d["HwtCoreVersion"] = s.threads[0].get_coreversion()
-		d["Id"] = s.id
-		d["Clk"] = s.clock.id
-		d["Async"] = "sync" if s.clock == prj.clock else "async"
-		dictionary["SLOTS"].append(d)
+		if s.threads:
+			d = {}
+			d["HwtCoreName"] = s.threads[0].get_corename()
+			d["HwtCoreVersion"] = s.threads[0].get_coreversion()
+			d["Id"] = s.id
+			d["Clk"] = s.clock.id
+			d["Async"] = "sync" if s.clock == prj.clock else "async"
+			dictionary["SLOTS"].append(d)
 	dictionary["CLOCKS"] = []
 	for c in prj.clocks:
 		d = {}
@@ -93,7 +94,7 @@ def export_hw_thread_ise(args, hwdir, link, thread):
 		thread = threads[0]
 
 		if thread.hwsource is None:
-			log.error("No hardware source specified")
+			log.info("No hardware source specified")
 	else:
 		log.error("Thread '" + thread  + "' not found")
 		return
