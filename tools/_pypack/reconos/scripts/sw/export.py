@@ -93,7 +93,7 @@ def export_sw_thread(args, swdir, link, thread):
 		return
 
 	dictionary = {}
-	dictionary["NAME"] = prj.name.lower()
+	dictionary["NAME"] = thread.name.lower()
 	dictionary["RESOURCES"] = []
 	for i,r in enumerate(thread.resources):
 		d = {}
