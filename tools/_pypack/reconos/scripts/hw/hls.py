@@ -16,7 +16,7 @@ def get_call(prj):
 	return export_hls_cmd
 
 def get_parser(prj):
-	parser = argparse.ArgumentParser("export_sim", description="""
+	parser = argparse.ArgumentParser("export_hls", description="""
 		Creates a hls project to analyse a single hardware thread
 		(FIXME: Solution not created and therefore directives missing)
 		""")
