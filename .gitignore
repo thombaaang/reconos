@@ -63,6 +63,7 @@ modules.builtin
 #
 # some ReconOS specific stuff
 #
-demos/*/*.hw/
-demos/*/*.sw/
-demos/*/*.sim/
+demos/*/*.hw*/
+demos/*/*.sw*/
+demos/*/*.sim*/
+demos/*/*.hls*/
