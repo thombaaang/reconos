@@ -11,21 +11,28 @@ def get_cmd(prj):
 	return "build_hw"
 
 def get_call(prj):
-	return build_ise_cmd
+	return build_cmd
 
 def get_parser(prj):
 	parser = argparse.ArgumentParser("build_hw", description="""
 		Builds the hardware project and generates a bitstream to
 		be downloaded to the FPGA.
 		""")
+	parser.add_argument("hwdir", help="alternative export directory", nargs="?")
 	return parser
 
-def build_ise_cmd(args):
-	build_ise(args)
+def build_cmd(args):
+	build(args, args.hwdir)
 
-def build_ise(args):
+def build(args, hwdir):
+	if args.prj.impinfo.xil[0] == "ise":
+		build_ise(args, hwdir)
+	else:
+		log.error("Xilinx tool not supported")
+
+def build_ise(args, hwdir):
 	prj = args.prj
-	hwdir = prj.basedir + ".hw"
+	hwdir = hwdir if hwdir is not None else prj.basedir + ".hw"
 
 	try:
 		shutil2.chdir(hwdir)
@@ -34,8 +41,8 @@ def build_ise(args):
 		return
 	
 	subprocess.call("""
-	  source /opt/Xilinx/""" + prj.ise + """/ISE_DS/settings64.sh;
-	  echo -e "run hwclean\nrun netlist\nexit\n" | xps -nw system""",
+	  source /opt/Xilinx/""" + prj.impinfo.xil[1] + """/ISE_DS/settings64.sh;
+	  echo -e "run hwclean\nrun bits\nexit\n" | xps -nw system""",
 	  shell=True)
 
 	print()

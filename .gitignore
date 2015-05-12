@@ -66,3 +66,4 @@ modules.builtin
 demos/*/*.hw*/
 demos/*/*.sw*/
 demos/*/*.sim*/
+demos/*/*.hls*/
