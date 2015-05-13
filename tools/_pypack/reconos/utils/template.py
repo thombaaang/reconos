@@ -19,39 +19,49 @@ import reconos.utils.shutil2 as shutil2
 # Internal method used for replacing each occurence of a generate
 # statement in the source file.
 #
-#   d - dictionary including the used keys
+#   scope - list of dictionaries including the used keys
 #
-def _gen_preproc(d):
+def _gen_preproc(scope):
 	def _gen_(m):
-		if m.group("key") not in d:
+		values = [_[m.group("key")] for _ in scope if m.group("key") in _]
+
+		if not values:
 			return m.string[m.start():m.end()]
+		else:
+			value = values[0]
 
-		if type(d[m.group("key")]) is bool:
-			return m.group("data")
+		if type(value) is bool:
+			return m.group("data") if value else ""
 
-		if type(d[m.group("key")]) is not list:
+		if type(value) is not list:
 			return m.string[m.start():m.end()]
 
 		data = ""
-		for i, r in enumerate(d[m.group("key")]):
-			l = {"_i" : i}
-			l.update(r)
+		for i, r in enumerate(value):
+			local = {"_i" : i}
+			local.update(r)
+			nscope = [local] + scope
 
-			if m.group("cond") is not None and not eval(m.group("cond"), l):
+			if m.group("cond") is not None and not eval(m.group("cond"), local):
 				continue
 
-			ndata = m.group("data")
+			od = "<<" + "=" * len(scope)
+			cd = "<<" + "=" * len(scope)
+			reg = od + r"generate for (?P<key>[A-Za-z0-9_]*?)(?:\((?P<cond>.*?)\))?" + cd + r"\n?(?P<data>.*?)" + od + r"end generate" + cd
+			ndata = re.sub(reg, _gen_preproc(nscope), m.group("data"), 0, re.DOTALL)
 
 			reg = r"<<(?P<key>[A-Za-z0-9_]+)(?:\((?P<join>.*?)\))?>>"
 			def repl(m):
-				if m.group("key") in l:
-					return str(l[m.group("key")]) 
-				else:
+				values = [_[m.group("key")] for _ in nscope if m.group("key") in _]
+
+				if not values:
 					return "<<" + m.group("key") + ">>"
+				else:
+					return str(values[0])
 			ndata = re.sub(reg, repl, ndata)
 
 			reg = r"<<c(?P<data>.)>>"
-			if i < len(d[m.group("key")]) - 1:
+			if i < len(value) - 1:
 				ndata = re.sub(reg, "\g<data>", ndata)
 			else:
 				ndata = re.sub(reg, "", ndata)
@@ -87,7 +97,7 @@ def preproc(filepath, dictionary, mode, force=False):
 		data = re.sub(r"<<reconos_preproc>>", "", data)
 
 	reg = r"<<generate for (?P<key>[A-Za-z0-9_]*?)(?:\((?P<cond>.*?)\))?>>\n?(?P<data>.*?)<<end generate>>"
-	data = re.sub(reg, _gen_preproc(dictionary), data, 0, re.DOTALL)
+	data = re.sub(reg, _gen_preproc([dictionary]), data, 0, re.DOTALL)
 
 	reg = r"<<(?P<key>[A-Za-z0-9_]+)>>"
 	def repl(m): 
