@@ -21,8 +21,12 @@
 #ifndef RECONOS_CALLS_H
 #define RECONOS_CALLS_H
 
+#include "reconos.h"
+#include "reconos_defs.h"
+
 #include "mbox.h"
 
+#include <stdint.h>
 #include <pthread.h>
 #include <semaphore.h>
 
@@ -40,17 +44,12 @@
  	type *name
 
 /*
- * Initializes the thread and reads from the osif the resume status.
- */
-#define THREAD_INIT()
-
-/*
  * Posts the semaphore specified by handle.
  *
  *   @see sem_post
  */
 #define SEM_POST(p_handle)\
-	sem_post((p_handle))
+	sem_post((p_handle)->ptr)
 
 /*
  * Waits for the semaphore specified by handle.
@@ -58,7 +57,7 @@
  *   @see sem_wait
  */
 #define SEM_WAIT(p_handle)\
-	sem_wait((p_handle))
+	sem_wait((p_handle)->ptr)
 
 /*
  * Locks the mutex specified by handle.
@@ -66,7 +65,7 @@
  *   @see pthread_mutex_lock
  */
 #define MUTEX_LOCK(p_hande)\
-	pthread_mutex_lock((p_handle))
+	pthread_mutex_lock((p_handle)->ptr)
 
 /*
  * Unlocks the mutex specified by handle.
@@ -74,55 +73,64 @@
  *   @see pthread_mutex_unlock
  */
 #define MUTEX_UNLOCK(p_handle)\
-	pthread_mutex_unlock(p_handle)
+	pthread_mutex_unlock((p_handle)->ptr)
 
 /*
  * Tries to lock the mutex specified by handle and returns if successful or not.
  *
  *   @see pthread_mutex_trylock
  */
+
 #define MUTEX_TRYLOCK(p_handle)\
-	pthread_mutex_trylock((p_handle))
-
-/*
- * Waits for the condition variable specified by handle.
- *
- *   @see pthread_cond_wait
- */
-#define COND_WAIT(p_handle,p_handle2)\
-	pthread_cond_wait((p_handle), (p_handle2))
-
-/*
- * Signals a single thread waiting on the condition variable specified by handle.
- *
- *   @see pthread_cond_signal
- */
-#define COND_SIGNAL(p_handle,p_handle2)\
-	pthread_cond_signal((p_handle), (p_handle2))
-
-/*
- * Signals all threads waiting on the condition variable specified by handle.
- *
- *   @see pthread_cond_broadcast
- */
-#define COND_BROADCAST(p_handle,p_handle2)\
-	pthread_cond_broadcast((p_handle), (p_handle2))
+	pthread_mutex_trylock((p_handle)->ptr)
 
 /*
  * Puts a single word into the mbox specified by handle.
  *
  *   @see mbox_get
  */
-#define MBOX_GET(p_handle)\
-	mbox_get((p_handle))
+#define MBOX_GET(res)\
+	_MBOX_GET(res, __rt, __run_id)
+
+static inline uint32_t _MBOX_GET(struct reconos_resource *res,
+                                 struct reconos_thread *rt, int run_id) {
+	uint32_t msg[2];
+
+	if (res->mode == RECONOS_RESOURCE_MODE_SW) {
+		return mbox_get(res->ptr);
+	} else if (res->mode == RECONOS_RESOURCE_MODE_HW) {
+		msg[0] = (run_id << 24) | (res->id << 16) | 0x00000001;
+		msg[1] = OSIF_CMD_MBOX_GET;
+		reconos_thread_swslot_write(rt, msg, 2);
+		reconos_thread_swslot_read(rt, msg, 2);
+		return msg[1];
+	}
+
+	return 0;
+}
 
 /*
  * Reads a single word from the mbox specified by handle.
  *
  *   @see mbox_put
  */
-#define MBOX_PUT(p_handle,data)\
-	mbox_put((p_handle), (data))
+#define MBOX_PUT(res,data)\
+	_MBOX_PUT(res, data, __rt, __run_id)
+
+static inline void _MBOX_PUT(struct reconos_resource *res, uint32_t data,
+                             struct reconos_thread *rt, int run_id) {
+	uint32_t msg[3];
+
+	if (res->mode == RECONOS_RESOURCE_MODE_SW) {
+		mbox_put(res->ptr, data);
+	} else if (res->mode == RECONOS_RESOURCE_MODE_HW) {
+		msg[0] = (run_id << 24) | (res->id << 16) | 0x00000002;
+		msg[1] = OSIF_CMD_MBOX_PUT;
+		msg[2] = data;
+		reconos_thread_swslot_write(rt, msg, 3);
+		reconos_thread_swslot_read(rt, msg, 3);
+	}
+}
 
 /*
  * Tries to put a single word into the mbox specified by handle but does not
@@ -131,7 +139,7 @@
  *   @see mbox_tryget
  */
 #define MBOX_TRYGET(p_handle,data)\
-	mbox_tryget((p_handle), (&data))
+	mbox_tryget((p_handle)->ptr, (&data))
 
 /*
  * Tries to read a single word from the mbox specified by handle but does not
@@ -140,7 +148,7 @@
  *   @see mbox_tryput
  */
 #define MBOX_TRYPUT(p_handle,data)\
-	mbox_tryput((p_handle), (data))
+	mbox_tryput((p_handle)->ptr, (data))
 
 /*
  * Gets the pointer to the initialization data of the ReconOS thread
@@ -167,11 +175,5 @@
  *   len - number of bytes to transmit (bytes)
  */
 #define MEM_WRITE(src, dst, len)
-
-/*
- * Terminates the current ReconOS thread.
- */
-#define THREAD_EXIT()\
-	pthread_exit(0);
 
 #endif /* RECONOS_CALLS_H */

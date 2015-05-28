@@ -7,7 +7,7 @@
          <top_modules>
             <top_module name="numeric_std" />
             <top_module name="reconos_pkg" />
-            <top_module name="reconos_pkg_tb" />
+            <top_module name="reconos_testbench" />
             <top_module name="std_logic_1164" />
             <top_module name="testbench" />
          </top_modules>

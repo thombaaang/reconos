@@ -21,14 +21,21 @@ def get_parser(prj):
 		""")
 	parser.add_argument("-l", "--link", help="link sources instead of copying", action="store_true")
 	parser.add_argument("-t", "--thread", help="export only single thread")
+	parser.add_argument("-r", "--resource", help="export only single resource")
 	parser.add_argument("hwdir", help="alternative export directory", nargs="?")
 	return parser
 
 def export_hw_cmd(args):
-	if args.thread is None:
-		export_hw(args, args.hwdir, args.link)
-	else:
+	if args.thread is not None and args.resource is not None:
+		log.error("-t and -r are exclusive")
+		return
+
+	if args.thread is not None:
 		export_hw_thread(args, args.hwdir, args.link, args.thread)
+	elif args.resource is not None:
+		export_hw_res(args, args.hwdir, args.resource)
+	else:
+		export_hw(args, args.hwdir, args.link)
 
 def export_hw(args, hwdir, link):
 	if args.prj.impinfo.xil[0] == "ise":
@@ -42,6 +49,12 @@ def export_hw_thread(args, hwdir, link, thread):
 	else:
 		log.error("Xilinx tool not supported")
 
+def export_hw_res(args, hwdir, resource):
+	if args.prj.impinfo.xil[0] == "ise":
+		export_hw_res_ise(args, hwdir, resource)
+	else:
+		log.error("Xilinx tool not supported")
+
 def export_hw_ise(args, hwdir, link):
 	prj = args.prj
 	hwdir = hwdir if hwdir is not None else prj.basedir + ".hw"
@@ -51,12 +64,15 @@ def export_hw_ise(args, hwdir, link):
 	dictionary = {}
 	dictionary["NUM_SLOTS"] = len(prj.slots)
 	dictionary["NUM_CLOCKS"] = len(prj.clocks)
+	dictionary["NUM_RESOURCES"] = len(prj.resources)
+	dictionary["NUM_HWRESOURCES"] = len([_ for _ in prj.resources if _.mode == "hw"])
 	dictionary["SYSCLK"] = prj.clock.id
 	dictionary["SYSRST"] = "SYSRESET"
 	dictionary["SLOTS"] = []
 	for s in prj.slots:
 		if s.threads:
 			d = {}
+			d["_e"] = s
 			d["HwtCoreName"] = s.threads[0].get_corename()
 			d["HwtCoreVersion"] = s.threads[0].get_coreversion()
 			d["Id"] = s.id
@@ -72,8 +88,31 @@ def export_hw_ise(args, hwdir, link):
 		d["ActFreqKHz"] = param[2] / 1000
 		d["M"] = param[0]
 		d["O"] = param[1]
-
 		dictionary["CLOCKS"].append(d)
+	dictionary["RESOURCES"] = []
+	for r in prj.resources:
+		d = {}
+		d["_e"] = r
+		d["Id"] = r.id
+		d["Name"] = r.name.lower()
+		d["Mode"] = r.mode
+		dictionary["RESOURCES"].append(d)
+
+	for d in dictionary["SLOTS"]:
+		s = d["_e"]
+		d["SlotId"] = s.id
+		resources = [_ for _ in s.acc_resources() if _.mode == "hw"]
+		resources = [_ for _ in dictionary["RESOURCES"] if _["_e"] in resources]
+		d["IcRes"] = resources
+		d["NumIcRes"] = len(resources)
+		d["HasIcRes"] = len(resources) != 0;
+
+	for d in dictionary["RESOURCES"]:
+		r = d["_e"]
+		d["ResId"] = r.id
+		slots = [_ for _ in dictionary["SLOTS"] if r in _["_e"].acc_resources()]
+		d["IcSlots"] = slots
+		d["NumIcSlots"] = len(slots)
 
 	log.info("Generating export files ...")
 	tmpl = "ref_" + prj.impinfo.os + "_" + "_".join(prj.impinfo.board) + "_" + prj.impinfo.design + "_" + prj.impinfo.xil[1]
@@ -83,9 +122,67 @@ def export_hw_ise(args, hwdir, link):
 	for t in prj.threads:
 		export_hw_thread(args, shutil2.join(hwdir, "pcores"), link, t.name)
 
+	log.info("Generating resources ...")
+	for r in [_ for _ in prj.resources if _.mode == "hw"]:
+		export_hw_res(args, shutil2.join(hwdir, "pcores"), r.name)
+
+def export_hw_res_ise(args, hwdir, resource):
+	prj = args.prj
+	hwdir = hwdir if hwdir is not None else prj.basedir + ".hw." + resource.lower()
+
+	log.info("Exporting resource " + resource + " to directory '" + hwdir + "'")
+
+	resources = [_ for _ in prj.resources if _.name == resource]
+	if (len(resources) == 1):
+		resource = resources[0]
+
+		if resource.mode != "hw":
+			log.info("Resource implemented in software")
+			return
+	else:
+		log.error("Resource " + resource + " not found")
+		return
+
+	tmp = tempfile.TemporaryDirectory()
+
+	dictionary = {}
+	dictionary["PART"] = prj.impinfo.part
+	dictionary["CLKPRD"] = prj.clock.get_periodns()
+	dictionary["ID"] = resource.id
+	dictionary["NAME"] = resource.name.lower()
+	dictionary["TYPE"] = resource.type
+	dictionary["ARGS"] = resource.args
+	srcs = shutil2.join(prj.impinfo.repo, "lib", "hwres", resource.type)
+	dictionary["SOURCES"] = [srcs]
+
+	log.info("Generating temporary HLS project in " + tmp.name + " ...")
+	prj.apply_template("hwres_hls_build", dictionary, tmp.name)
+
+	subprocess.call("""
+	  source /opt/Xilinx/Vivado/2014.4/settings64.sh;
+	  cd {0};
+	  vivado_hls -f script_csynth.tcl;""".format(tmp.name),
+	  shell=True)
+
+	dictionary = {}
+	dictionary["ID"] = resource.id
+	dictionary["NAME"] = resource.name.lower()
+	dictionary["TYPE"] = resource.type
+	srcs = shutil2.join(tmp.name, "hls", "sol", "syn", "vhdl")
+	dictionary["SOURCES"] = [srcs]
+	incls = shutil2.listfiles(srcs, True)
+	dictionary["INCLUDES"] = [{"File": shutil2.trimext(_)} for _ in incls]
+
+	log.info("Generating export files ...")
+	prj.apply_template("hwres_hls_pcore_vhdl", dictionary, hwdir)
+
+	shutil2.rmtree("/tmp/test")
+	shutil2.mkdir("/tmp/test")
+	shutil2.copytree(tmp.name, "/tmp/test")
+
 def export_hw_thread_ise(args, hwdir, link, thread):
 	prj = args.prj
-	hwdir = hwdir if hwdir is not None else prj.basedir + ".hw" + "." + thread.lower()
+	hwdir = hwdir if hwdir is not None else prj.basedir + ".hw." + thread.lower()
 
 	log.info("Exporting thread " + thread + " to directory '" + hwdir + "'")
 
@@ -95,12 +192,14 @@ def export_hw_thread_ise(args, hwdir, link, thread):
 
 		if thread.hwsource is None:
 			log.info("No hardware source specified")
+			return
 	else:
-		log.error("Thread '" + thread  + "' not found")
+		log.error("Thread " + thread  + " not found")
 		return
 
 	if thread.hwsource == "vhdl":
 		dictionary = {}
+		dictionary["ID"] = thread.id;
 		dictionary["NAME"] = thread.name.lower();
 		srcs = shutil2.join(prj.dir, "src", "rt_" + thread.name.lower(), thread.hwsource)
 		dictionary["SOURCES"] = [srcs]
@@ -115,6 +214,7 @@ def export_hw_thread_ise(args, hwdir, link, thread):
 			d["HexId"] = "%08x" % r.id
 			d["LocalId"] = i
 			d["HexLocalId"] =  "%08x" % i
+			d["Mode"] = r.mode
 			dictionary["RESOURCES"].append(d)
 
 		log.info("Generating export files ...")

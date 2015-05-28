@@ -1,0 +1,4 @@
+work	"FIFO_top_mbox_V_V.vhd"
+work	"FIFO_top_queue_get_V_V.vhd"
+work	"FIFO_top_queue_put_V_V.vhd"
+work	"top.vhd"

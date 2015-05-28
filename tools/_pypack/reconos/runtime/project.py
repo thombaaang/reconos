@@ -28,8 +28,8 @@ class Clock:
 	_id = 0
 
 	def __init__(self, name, source, freq):
-		self.id = Resource._id
-		Resource._id += 1
+		self.id = Clock._id
+		Clock._id += 1
 		self.name = name
 		self.source = source
 		self.freq = freq
@@ -58,13 +58,14 @@ class Clock:
 # Class representing a resource in the project.
 #
 class Resource:
-	_id = 0
+	_id = 128
 
-	def __init__(self, name, type_, args, group):
+	def __init__(self, name, type_, mode, args, group):
 		self.id = Resource._id
 		Resource._id += 1
 		self.name = name
 		self.type = type_
+		self.mode = mode
 		self.args = args
 		self.group = group
 
@@ -84,6 +85,9 @@ class Slot:
 		self.clock = clock
 		self.threads = []
 
+	def acc_resources(self):
+		return set([r for t in self.threads for r in t.resources])
+
 	def __str__(self):
 		return "Slot '" + self.name + "' (" + str(self.id) + ")"
 
@@ -97,7 +101,7 @@ class Thread:
 	_id = 0
 
 	def __init__(self, name, slots, hw, sw, res):
-		self.Id = Thread._id
+		self.id = Thread._id
 		Thread._id += 1
 		self.name = name
 		self.slots = slots
@@ -294,7 +298,14 @@ class Project:
 
 				log.debug("Found resource '" + str(r) + "' (" + str(match[0]) + "," + str(match[1:]) + "," + str(group) + ")")
 			
-				resource = Resource(r, match[0], match[1:], group)
+				if "hw" in match:
+					match.remove("hw")
+					resource = Resource(r, match[0], "hw", match[1:], group)
+				elif "sw" in match:
+					match.remove("sw")
+					resource = Resource(r, match[0], "sw", match[1:], group)
+				else:
+					resource = Resource(r, match[0], "sw", match[1:], group)
 				self.resources.append(resource)
 
 	#
@@ -353,7 +364,8 @@ class Project:
 			else:
 				sw = None
 			if cfg.has_option(t, "ResourceGroup"):
-				res = [_ for _ in self.resources if _.group == cfg.get(t, "ResourceGroup")]
+				res = re.split(r"[, ]+", cfg.get(t, "ResourceGroup"))
+				res = [_ for _ in self.resources if _.group in res]
 				if not res:
 					log.error("ResourceGroup not found")
 			else:

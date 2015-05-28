@@ -33,6 +33,10 @@ def _gen_preproc(scope):
 		if type(value) is bool:
 			return m.group("data") if value else ""
 
+		if type(value) is int:
+			value = [{} for _ in range(value)]
+			print("Generating for int: " + str(value))
+
 		if type(value) is not list:
 			return m.string[m.start():m.end()]
 
@@ -46,18 +50,21 @@ def _gen_preproc(scope):
 				continue
 
 			od = "<<" + "=" * len(scope)
-			cd = "<<" + "=" * len(scope)
+			cd = "=" * len(scope) + ">>"
 			reg = od + r"generate for (?P<key>[A-Za-z0-9_]*?)(?:\((?P<cond>.*?)\))?" + cd + r"\n?(?P<data>.*?)" + od + r"end generate" + cd
 			ndata = re.sub(reg, _gen_preproc(nscope), m.group("data"), 0, re.DOTALL)
 
-			reg = r"<<(?P<key>[A-Za-z0-9_]+)(?:\((?P<join>.*?)\))?>>"
+			reg = r"<<(?P<key>[A-Za-z0-9_]+)(?:\((?P<join>.*?)\))?(?:\|(?P<format>.*))?>>"
 			def repl(m):
 				values = [_[m.group("key")] for _ in nscope if m.group("key") in _]
 
 				if not values:
 					return "<<" + m.group("key") + ">>"
 				else:
-					return str(values[0])
+					if m.group("format") is None:
+						return str(values[0])
+					else:
+						return m.group("format").format(values[0])
 			ndata = re.sub(reg, repl, ndata)
 
 			reg = r"<<c(?P<data>.)>>"
@@ -99,10 +106,16 @@ def preproc(filepath, dictionary, mode, force=False):
 	reg = r"<<generate for (?P<key>[A-Za-z0-9_]*?)(?:\((?P<cond>.*?)\))?>>\n?(?P<data>.*?)<<end generate>>"
 	data = re.sub(reg, _gen_preproc([dictionary]), data, 0, re.DOTALL)
 
-	reg = r"<<(?P<key>[A-Za-z0-9_]+)>>"
+	reg = r"<<(?P<key>[A-Za-z0-9_]+)(?:\|(?P<format>.*))?>>"
 	def repl(m): 
 		if m.group("key") in dictionary:
-			return str(dictionary[m.group("key")])
+			if m.group("format") is None:
+				return str(dictionary[m.group("key")])
+			else:
+				if type(dictionary[m.group("key")]) is list:
+					return m.group("format").format(*tuple(dictionary[m.group("key")]))
+				else:
+					return m.group("format").format(dictionary[m.group("key")])
 		else:
 			return m.string[m.start():m.end()]
 	data = re.sub(reg, repl, data)
@@ -192,7 +205,7 @@ def predirectory(dirpath, dirs, dictionary):
 #
 #   filepath   - path to template directory
 #   dictionary - dictionary containing all keys
-#   mode       - printe or overwrite to print to stdout or overwrite
+#   mode       - print or overwrite to print to stdout or overwrite
 #
 def generate(filepath, dictionary, mode, link = False):
 	def pc(f): return precopy(f, dictionary, link)

@@ -5,9 +5,15 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library reconos_v3_01_a;
-use reconos_v3_01_a.reconos_fifo_sync;
 use reconos_v3_01_a.reconos_pkg.all;
-use reconos_v3_01_a.reconos_pkg_tb.all;
+use reconos_v3_01_a.reconos_defs.all;
+use reconos_v3_01_a.reconos_testbench.all;
+
+library reconos_fifo_sync_v1_00_a;
+use reconos_fifo_sync_v1_00_a.reconos_fifo_sync;
+
+library rt_<<THREAD>>_v1_00_a;
+use rt_<<THREAD>>_v1_00_a.all;
 
 entity testbench is
 end testbench;
@@ -93,7 +99,7 @@ begin
 	end process;
 	
 
-	osif_sw2hw : entity reconos_v3_01_a.reconos_fifo_sync
+	osif_sw2hw : entity reconos_fifo_sync_v1_00_a.reconos_fifo_sync
 		generic map (
 			C_FIFO_DATA_WIDTH => 32,
 			C_FIFO_ADDR_WIDTH => C_OSIF_ADDR_WIDTH
@@ -112,7 +118,7 @@ begin
 			FIFO_Rst => sys_rst
 		);
 
-	osif_hw2sw : entity reconos_v3_01_a.reconos_fifo_sync
+	osif_hw2sw : entity reconos_fifo_sync_v1_00_a.reconos_fifo_sync
 		generic map (
 			C_FIFO_DATA_WIDTH => 32,
 			C_FIFO_ADDR_WIDTH => C_OSIF_ADDR_WIDTH
@@ -131,7 +137,7 @@ begin
 			FIFO_Rst => sys_rst
 		);
 
-	memif_mem2hwt : entity reconos_v3_01_a.reconos_fifo_sync
+	memif_mem2hwt : entity reconos_fifo_sync_v1_00_a.reconos_fifo_sync
 		generic map (
 			C_FIFO_DATA_WIDTH => 32,
 			C_FIFO_ADDR_WIDTH => C_MEMIF_ADDR_WIDTH
@@ -150,7 +156,7 @@ begin
 			FIFO_Rst => sys_rst
 		);
 
-	memif_hwt2mem : entity reconos_v3_01_a.reconos_fifo_sync
+	memif_hwt2mem : entity reconos_fifo_sync_v1_00_a.reconos_fifo_sync
 		generic map (
 			C_FIFO_DATA_WIDTH => 32,
 			C_FIFO_ADDR_WIDTH => C_MEMIF_ADDR_WIDTH
@@ -169,7 +175,7 @@ begin
 			FIFO_Rst => sys_rst
 		);
 
-	hwt : entity work.rt_<<THREAD>>
+	hwt : entity rt_<<THREAD>>_v1_00_a.rt_<<THREAD>>
 		port map (
 			OSIF_Sw2Hw_Data => osif_sw2hw_s_data,
 			OSIF_Sw2Hw_Empty => osif_sw2hw_s_empty,

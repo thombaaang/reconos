@@ -31,6 +31,8 @@ void bubblesort(uint32_t *data, int data_count) {
 void *rt_sortdemo(void *data) {
 	uint32_t ret;
 
+	THREAD_INIT();
+
 	while (1) {
 		ret = MBOX_GET(resources_address);
 
@@ -41,4 +43,6 @@ void *rt_sortdemo(void *data) {
 		bubblesort((uint32_t *)ret, BLOCK_SIZE);
 		MBOX_PUT(resources_acknowledge, ret);
 	}
+
+	THREAD_EXIT();
 }

@@ -32,127 +32,45 @@
 #include "pthread.h"
 
 #define PROC_CONTROL_DEV "/dev/reconos-proc-control"
-#define OSIF_INTC_DEV "/dev/reconos-osif-intc"
+#define OSIF_DEV "/dev/reconos-osif"
 
-unsigned int NUM_HWTS = 0;
 unsigned int NUM_CLKMGS = 1;
 
 
 /* == OSIF related functions ============================================ */
 
-#define OSIF_FIFO_BASE_ADDR       0x75A00000
-#define OSIF_FIFO_BASE_SIZE       0x10000
-#define OSIF_FIFO_MEM_SIZE        0x10
-#define OSIF_FIFO_RECV_REG        0
-#define OSIF_FIFO_SEND_REG        1
-#define OSIF_FIFO_RECV_STATUS_REG 2
-#define OSIF_FIFO_SEND_STATUS_REG 3
-
-#define OSIF_FIFO_RECV_STATUS_EMPTY_MASK 0x80000000
-#define OSIF_FIFO_SEND_STATUS_FULL_MASK  0x80000000
-
-#define OSIF_FIFO_RECV_STATUS_FILL_MASK 0xFFFF
-#define OSIF_FIFO_SEND_STATUS_REM_MASK  0xFFFF
-
-struct osif_fifo_dev {
-	unsigned int index;
-
-	volatile uint32_t *ptr;
-
-	unsigned int fifo_fill;
-	unsigned int fifo_rem;
-};
-
-int osif_intc_fd;
-struct osif_fifo_dev *osif_fifo_dev;
-
-int reconos_osif_open(int num) {
-	debug("[reconos-osif-%d] "
-	      "opening ...\n", num);
-
-	if (num < 0 || num >= NUM_HWTS)
-		return -1;
-	else
-		return num;
-}
-
-static inline unsigned int osif_fifo_hw2sw_fill(struct osif_fifo_dev *dev) {
-	uint32_t reg;
-
-	reg = dev->ptr[OSIF_FIFO_RECV_STATUS_REG];
-	if (reg & OSIF_FIFO_RECV_STATUS_EMPTY_MASK)
+int reconos_osif_open(uint32_t ctrl_mask, uint32_t ctrl_bits) {
+	int fd = open(OSIF_DEV, O_RDWR);
+	if (fd < 0) {
+		panic("[reconos-osif] "
+		      "cannot open osif (0x%x, 0x%x)\n", ctrl_mask, ctrl_bits);
 		return 0;
-	else
-		return (reg & OSIF_FIFO_RECV_STATUS_FILL_MASK) + 1;
-}
-
-static inline unsigned int osif_fifo_sw2hw_rem(struct osif_fifo_dev *dev) {
-	uint32_t reg;
-
-	reg = dev->ptr[OSIF_FIFO_SEND_STATUS_REG];
-
-	if (reg & OSIF_FIFO_SEND_STATUS_FULL_MASK)
-		return 0;
-	else
-		return (reg & OSIF_FIFO_SEND_STATUS_REM_MASK) + 1;
-}
-
-uint32_t reconos_osif_read(int fd) {
-	struct osif_fifo_dev *dev = &osif_fifo_dev[fd];
-	uint32_t data;
-
-	if (dev->fifo_fill == 0) {
-		debug("[reconos-osif-%d] "
-		      "reading, waiting for data ...\n", fd);
-
-		dev->fifo_fill = osif_fifo_hw2sw_fill(dev);
-
-		if (dev->fifo_fill == 0) {
-			ioctl(osif_intc_fd, RECONOS_OSIF_INTC_WAIT, &dev->index);
-			dev->fifo_fill = osif_fifo_hw2sw_fill(dev);
-		}
-
-		if (dev->fifo_fill == 0) {
-			return 0xFFFFFFFF;
-		}
 	}
 
-	data = dev->ptr[OSIF_FIFO_RECV_REG];
-	dev->fifo_fill--;
+	ioctl(fd, RECONOS_OSIF_SET_MASK, &ctrl_mask);
+	ioctl(fd, RECONOS_OSIF_SET_BITS, &ctrl_bits);
 
-	debug("[reconos-osif-%d] "
-	      "reading finished 0x%x\n", fd, data);
-
-
-	return data;
+	return fd;
 }
 
-void reconos_osif_write(int fd, uint32_t data) {
-	struct osif_fifo_dev *dev = &osif_fifo_dev[fd];
+ssize_t reconos_osif_read(int fd, uint32_t *buf, size_t count) {
+	return read(fd, buf, count);
+}
 
-	debug("[reconos-osif-%d] "
-	      "writing 0x%x ...\n", fd, data);
-
-	// do busy waiting here
-	do {
-		dev->fifo_rem = osif_fifo_sw2hw_rem(dev);
-	} while (dev->fifo_rem == 0);
-
-	dev->ptr[OSIF_FIFO_SEND_REG] = data;
-
-	debug("[reconos-osif-%d] "
-	      "writing finished\n", fd);
+ssize_t reconos_osif_write(int fd, uint32_t *buf, size_t count) {
+	return write(fd, buf, count);
 }
 
 void reconos_osif_break(int fd) {
+#if 0
 	struct osif_fifo_dev *dev = &osif_fifo_dev[fd];
 
 	ioctl(osif_intc_fd, RECONOS_OSIF_INTC_BREAK, &dev->index);
+#endif
 }
 
 void reconos_osif_close(int fd) {
-	debug("[reconos-osif-%d] "
-	      "closing ...\n", fd);
+	close(fd);
 }
 
 
@@ -384,51 +302,8 @@ void reconos_drv_init() {
 	else
 		proc_control_fd = fd;
 
-
-	// opening osif intc device
-	fd = open(OSIF_INTC_DEV, O_RDWR);
-	if (fd < 0)
-		panic("[reconos-core] "
-		      "error while opening osif intc\n");
-	else
-		osif_intc_fd = fd;
-
-
 	// reset entire system
 	reconos_proc_control_sys_reset(proc_control_fd);
-
-
-	// get number of hardware threads
-	NUM_HWTS = reconos_proc_control_get_num_hwts(proc_control_fd);
-
-
-	// create mapping for osif
-	fd = open("/dev/mem", O_RDWR | O_SYNC);
-	if (fd < 0)
-		panic("[reconos-osif] "
-		      "failed to open /dev/mem\n");
-
-	mem = (char *)mmap(0, OSIF_FIFO_BASE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, OSIF_FIFO_BASE_ADDR);
-	if (mem == MAP_FAILED)
-		panic("[reconos-osif] "
-		      "failed to mmap osif memory\n");
-
-	close(fd);
-
-
-	// allocate and initialize osif devices
-	osif_fifo_dev = (struct osif_fifo_dev*)malloc(NUM_HWTS * sizeof(struct osif_fifo_dev));
-	if (!osif_fifo_dev)
-		panic("[reconos-osif] "
-		      "failed to allocate memory\n");
-
-	for (i = 0; i < NUM_HWTS; i++) {
-		osif_fifo_dev[i].index = i;
-		osif_fifo_dev[i].ptr = (uint32_t *)(mem + i * OSIF_FIFO_MEM_SIZE);
-		osif_fifo_dev[i].fifo_fill = 0;
-		osif_fifo_dev[i].fifo_rem = 0;
-	}
-
 
 	// create mapping for clock
 	fd = open("/dev/mem", O_RDWR | O_SYNC);

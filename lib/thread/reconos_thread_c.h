@@ -23,17 +23,20 @@
 #ifndef RECONOS_THREAD_H
 #define RECONOS_THREAD_H
 
+#include "reconos.h"
 #include "reconos_app.h"
+
 
 /* == Thread resources ================================================= */
 
 /*
- * Definition of resource ids for resources of this thread. Always use the
- * pointers directly and not search for id in resource array.
+ * Definiton of resources for ReconOS thread. Only use these resource
+ * definition via the appropriate call functions.
  */
 <<generate for RESOURCES>>
-#define <<NameUpper>> 0x<<HexId>>
+extern struct reconos_resource *<<NameLower>>;
 <<end generate>>
+
 
 /* == Thread helper macros ============================================= */
 
@@ -48,5 +51,18 @@
  */
 #define THREAD_ENTRY()\
 	void rt_<<NAME>>(void *data)
+
+/*
+ * Initializes the thread and reads from the osif the resume status.
+ */
+#define THREAD_INIT()\
+ 	struct reconos_thread  *__rt = (struct reconos_thread *)data;\
+	int __run_id = reconos_thread_get_runid(__rt);
+
+/*
+ * Terminates the current ReconOS thread.
+ */
+#define THREAD_EXIT()\
+	pthread_exit(0);
 
 #endif /* RECONOS_THREAD_H */

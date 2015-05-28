@@ -12,8 +12,7 @@
  *   project:      ReconOS
  *   author:       Christoph Rüthing, University of Paderborn
  *   description:  Driver for the ReconOS system. It includes the drivers
- *                 for the OSIFs (AXI FIFO), the interrupt controller and
- *                 the proc control.
+ *                 for the OSIFs (AXI FIFO) and the proc control.
  *
  * ======================================================================
  */
@@ -23,12 +22,13 @@
 #define RECONOS_IOC_MAGIC       'k'
 
 /*
- * IOCTL definitions for interrupt controller
+ * IOCTL definitions for osif
  *
- *   intc_wait - wait for interrupt on specific osif
+ *   set_mask - set mask for arbitration
+ *   set_bits - set ctrl for arbitration
  */
-#define RECONOS_OSIF_INTC_WAIT       _IOW(RECONOS_IOC_MAGIC, 20, unsigned int)
-#define RECONOS_OSIF_INTC_BREAK      _IO(RECONOS_IOC_MAGIC, 21)
+#define RECONOS_OSIF_SET_MASK  _IOW(RECONOS_IOC_MAGIC, 20, uint32_t)
+#define RECONOS_OSIF_SET_BITS  _IOW(RECONOS_IOC_MAGIC, 21, uint32_t)
 
 /*
  * IOCTL definitions for proc control

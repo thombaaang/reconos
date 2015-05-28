@@ -31,32 +31,24 @@
 /*
  * @see header
  */
-<<generate for RESOURCES(Type == "mbox")>>
+<<generate for RESOURCES(Type == "mbox" and Mode == "sw")>>
 struct mbox <<NameLower>>_s;
-struct mbox *<<NameLower>> = &<<NameLower>>_s;
+struct mbox *<<NameLower>>_ptr = &<<NameLower>>_s;
 <<end generate>>
 
-<<generate for RESOURCES(Type == "sem")>>
+<<generate for RESOURCES(Type == "sem" and Mode == "sw")>>
 sem_t <<NameLower>>_s;
-sem_t *<<NameLower>> = &<<NameLower>>_s;
+sem_t *<<NameLower>>_ptr = &<<NameLower>>_s;
 <<end generate>>
 
-<<generate for RESOURCES(Type == "mutex")>>
+<<generate for RESOURCES(Type == "mutex" and Mode == "sw")>>
 pthread_mutex_t <<NameLower>>_s;
-pthread_mutex_t *<<NameLower>> = &<<NameLower>>_s;
-<<end generate>>
-
-<<generate for RESOURCES(Type == "cond")>>
-pthread_cond_t <<NameLower>>_s;
-pthread_cond_t *<<NameLower>> = &<<NameLower>>_s;
+pthread_mutex_t *<<NameLower>>_ptr = &<<NameLower>>_s;
 <<end generate>>
 
 <<generate for RESOURCES>>
-struct reconos_resource <<NameLower>>_res = {
-	.id = 0x<<HexId>>,
-	.ptr = &<<NameLower>>_s,
-	.type = RECONOS_RESOURCE_TYPE_<<TypeUpper>>
-};
+struct reconos_resource <<NameLower>>_res;
+struct reconos_resource *<<NameLower>> = &<<NameLower>>_res;
 <<end generate>>
 
 
@@ -66,20 +58,31 @@ struct reconos_resource <<NameLower>>_res = {
  * @see header
  */
 void reconos_app_init() {
-	<<generate for RESOURCES(Type == "mbox")>>
-	mbox_init(<<NameLower>>, <<Args>>);
+	<<generate for RESOURCES(Type == "mbox" and Mode == "sw")>>
+	mbox_init(<<NameLower>>_ptr, <<Args>>);
 	<<end generate>>
 
-	<<generate for RESOURCES(Type == "sem")>>
-	sem_init(<<NameLower>>, <<Args>>);
+	<<generate for RESOURCES(Type == "sem" and Mode == "sw")>>
+	sem_init(<<NameLower>>_ptr, <<Args>>);
 	<<end generate>>
 
-	<<generate for RESOURCES(Type == "mutex")>>
-	pthread_mutex_init(<<NameLower>>, NULL);
+	<<generate for RESOURCES(Type == "mutex" and Mode == "sw")>>
+	pthread_mutex_init(<<NameLower>>_ptr, NULL);
 	<<end generate>>
 
-	<<generate for RESOURCES(Type == "cond")>>
-	pthread_cond_init(<<NameLower>>, NULL);
+	<<generate for RESOURCES(Type == "cond" and Mode == "sw")>>
+	pthread_cond_init(<<NameLower>>_ptr, NULL);
+	<<end generate>>
+
+	<<generate for RESOURCES(Mode == "sw")>>
+	reconos_resource_init(&<<NameLower>>_res, <<Id>>,
+	                      RECONOS_RESOURCE_TYPE_<<TypeUpper>>, RECONOS_RESOURCE_MODE_SW,
+	                      &<<NameLower>>_s);
+	<<end generate>>
+	<<generate for RESOURCES(Mode == "hw")>>
+	reconos_resource_init(&<<NameLower>>_res, <<Id>>,
+	                      RECONOS_RESOURCE_TYPE_<<TypeUpper>>, RECONOS_RESOURCE_MODE_HW,
+	                      NULL);
 	<<end generate>>
 }
 
@@ -87,20 +90,20 @@ void reconos_app_init() {
  * @see header
  */
 void reconos_app_cleanup() {
-	<<generate for RESOURCES(Type == "mbox")>>
-	mbox_destroy(<<NameLower>>);
+	<<generate for RESOURCES(Type == "mbox" and Mode == "sw")>>
+	mbox_destroy(<<NameLower>>_ptr);
 	<<end generate>>
 
-	<<generate for RESOURCES(Type == "sem")>>
-	sem_destroy(<<NameLower>>);
+	<<generate for RESOURCES(Type == "sem" and Mode == "sw")>>
+	sem_destroy(<<NameLower>>_ptr);
 	<<end generate>>
 
-	<<generate for RESOURCES(Type == "mutex")>>
-	pthread_mutex_destroy(<<NameLower>>);
+	<<generate for RESOURCES(Type == "mutex" and Mode == "sw")>>
+	pthread_mutex_destroy(<<NameLower>>_ptr);
 	<<end generate>>
 
-	<<generate for RESOURCES(Type == "cond")>>
-	pthread_cond_destroy(<<NameLower>>, NULL);
+	<<generate for RESOURCES(Type == "cond" and Mode == "sw")>>
+	pthread_cond_destroy(<<NameLower>>_ptr, NULL);
 	<<end generate>>
 }
 
@@ -126,12 +129,10 @@ struct reconos_thread *reconos_thread_create_hwt_<<Name>>() {
 		panic("[reconos-core] ERROR: failed to allocate memory for thread\n");
 	}
 
-	int slots[] = {<<Slots>>};
 	reconos_thread_init(rt, "<<Name>>", 0);
 	reconos_thread_setinitdata(rt, 0);
-	reconos_thread_setallowedslots(rt, slots, <<SlotCount>>);
 	reconos_thread_setresourcepointers(rt, resources_<<Name>>, <<ResourceCount>>);
-	reconos_thread_create_auto(rt, RECONOS_THREAD_HW);
+	reconos_thread_create(rt, RECONOS_THREAD_MODE_HW);
 
 	return rt;
 }
@@ -147,13 +148,11 @@ struct reconos_thread *reconos_thread_create_swt_<<Name>>() {
 		panic("[reconos-core] ERROR: failed to allocate memory for thread\n");
 	}
 
-	int slots[] = {<<Slots>>};
 	reconos_thread_init(rt, "<<Name>>", 0);
 	reconos_thread_setinitdata(rt, 0);
-	reconos_thread_setallowedslots(rt, slots, <<SlotCount>>);
 	reconos_thread_setresourcepointers(rt, resources_<<Name>>, <<ResourceCount>>);
 	reconos_thread_setswentry(rt, rt_<<Name>>);
-	reconos_thread_create_auto(rt, RECONOS_THREAD_SW);
+	reconos_thread_create(rt, RECONOS_THREAD_MODE_SW);
 
 	return rt;
 }

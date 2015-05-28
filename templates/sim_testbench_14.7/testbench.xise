@@ -20,6 +20,16 @@
       <association xil_pn:name="Implementation" xil_pn:seqID="1"/>
       <library xil_pn:name="reconos_v3_01_a"/>
     </file>
+    <file xil_pn:name="reconos_defs.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="1"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="1"/>
+      <library xil_pn:name="reconos_v3_01_a"/>
+    </file>
+    <file xil_pn:name="reconos_calls.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="1"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="1"/>
+      <library xil_pn:name="reconos_v3_01_a"/>
+    </file>
     <file xil_pn:name="testbench.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="6"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="6"/>
@@ -28,7 +38,7 @@
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="3"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="4"/>
     </file>
-    <file xil_pn:name="reconos_pkg_tb.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="reconos_testbench.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="2"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="2"/>
       <library xil_pn:name="reconos_v3_01_a"/>
@@ -36,19 +46,25 @@
     <file xil_pn:name="reconos_fifo_async.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="0"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="27"/>
-      <library xil_pn:name="reconos_v3_01_a"/>
+      <library xil_pn:name="reconos_fifo_async_v1_00_a"/>
     </file>
     <file xil_pn:name="reconos_fifo_sync.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="4"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="28"/>
-      <library xil_pn:name="reconos_v3_01_a"/>
+      <library xil_pn:name="reconos_fifo_sync_v1_00_a"/>
     </file>
     <<generate for FILES>>
     <file xil_pn:name="<<File>>" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="0"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
+      <library xil_pn:name="rt_<<THREAD>>_v1_00_a"/>
     </file>
     <<end generate>>
+    <file xil_pn:name="reconos_thread.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="1"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="1"/>
+      <library xil_pn:name="rt_<<THREAD>>_v1_00_a"/>
+    </file>
   </files>
 
   <autoManagedFiles>

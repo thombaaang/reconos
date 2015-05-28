@@ -87,6 +87,8 @@ int main(int argc, char **argv) {
 	reconos_app_init();
 	timer_init();
 
+	reconos_thread_create_swt_delegate();
+
 	log("creating %d hw-threads:", num_hwts);
 	for (i = 0; i < num_hwts; i++) {
 		log(" %d", i);
@@ -114,7 +116,7 @@ int main(int argc, char **argv) {
 
 	log("putting %d blocks into job queue: ", num_blocks);
 	for (i = 0; i < num_blocks; i++) {
-		mbox_put(resources_address, (uint32_t)(data + i * BLOCK_SIZE));
+		mbox_put(delegateresources_daddress_ptr, (uint32_t)(data + i * BLOCK_SIZE));
 		log(".");
 	}
 	log("\n");
@@ -122,7 +124,7 @@ int main(int argc, char **argv) {
 	t_start = timer_get();
 	log("waiting for %d acknowledgements: ", num_blocks);
 	for (i = 0; i < num_blocks; i++) {
-		mbox_get(resources_acknowledge);
+		mbox_get(delegateresources_dacknowledge_ptr);
 		log(".");
 	}
 	log("\n");

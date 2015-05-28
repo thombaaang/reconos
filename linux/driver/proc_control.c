@@ -20,6 +20,8 @@
  */
 
 #include "proc_control.h"
+ 
+#include "osif.h"
 
 #include <linux/wait.h>
 #include <linux/sched.h>
@@ -249,6 +251,8 @@ static long proc_control_ioctl(struct file *filp, unsigned int cmd,
 			write_reg(dev, SYS_RESET_REG, 0);
 
 			spin_unlock(&dev->lock);
+
+			osif_reset();
 			break;
 
 		case RECONOS_PROC_CONTROL_SET_HWT_RESET:

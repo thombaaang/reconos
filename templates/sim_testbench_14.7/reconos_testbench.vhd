@@ -27,21 +27,19 @@ use ieee.numeric_std.all;
 
 library reconos_v3_01_a;
 use reconos_v3_01_a.reconos_pkg.all;
+use reconos_v3_01_a.reconos_defs.all;
 
-package reconos_pkg_tb is
+package reconos_testbench is
 
 	-- == Constant definitions ============================================
 
 	--
 	-- General constants
 	--
-	--   C_CLK_PRD          - Clock period to simulate
-	--   C_OSIF_ADDR_WIDTH  - Address width of the osif
-	--   C_MEMIF_ADDR_WIDTH - Address width of memif
+	--   C_CLK_PRD               - Clock period to simulate
+	--   C_SYSTEM_RAM_SIZE_WORDS - Size of sysem memory
 	--
 	constant C_CLK_PRD : time := 10 ns;
-	constant C_OSIF_ADDR_WIDTH : integer := 2;
-	constant C_MEMIF_ADDR_WIDTH : integer := 6;
 	constant C_SYSTEM_RAM_SIZE_WORDS : integer := 2048;
 
 
@@ -189,9 +187,9 @@ package reconos_pkg_tb is
 	);
 
 
-end package reconos_pkg_tb;
+end package reconos_testbench;
 
-package body reconos_pkg_tb is
+package body reconos_testbench is
 
 	-- == Util functions ==================================================
 
@@ -316,34 +314,40 @@ package body reconos_pkg_tb is
 		signal tb_o_osif : out tb_o_osif_t;
 		word             : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0)
 	) is
+		variable ctrl   : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable cmd    : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
-		variable handle : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 	begin
 		tb_o_osif.hw2sw_re <= '1';
 
 		wait until tb_i_osif.hw2sw_empty = '0';
 		wait for C_CLK_PRD;
 
-		cmd := tb_i_osif.hw2sw_data;
-		assert cmd = OSIF_CMD_MBOX_GET
-		  report "[ReconOS Testbench] " &
-		         "ERROR: Wrong command received: " &
-		         "0x" & hex(cmd) & " but expected 0x" & hex(OSIF_CMD_MBOX_GET)
-		  severity failure;
+		ctrl := tb_i_osif.hw2sw_data;
 
 		wait until tb_i_osif.hw2sw_empty = '0';
 		wait for C_CLK_PRD;
 
+		cmd := tb_i_osif.hw2sw_data;
+		assert cmd = OSIF_CMD_MBOX_GET
+		  report "[ReconOS Testbench - 0x" & hex(ctrl) & "]" &
+		         "ERROR: Wrong command received: " &
+		         "0x" & hex(cmd) & " but expected 0x" & hex(OSIF_CMD_MBOX_GET)
+		  severity failure;
+
 		tb_o_osif.hw2sw_re <= '0';
-
 		tb_o_osif.sw2hw_we <= '1';
-		tb_o_osif.sw2hw_data <= word;
+		tb_o_osif.sw2hw_data <= x"1D1DEEEE";
 
-		handle := tb_i_osif.hw2sw_data;
-		report "[ReconOS Testbench] " &
-		       "OSIF-Call mbox_get (0x" & hex(handle) & "): 0x" & hex(word);
+		report "[ReconOS Testbench - 0x" & hex(ctrl) & "]" &
+		       "OSIF-Call mbox_get: 0x" & hex(word);
 
 		wait until tb_i_osif.sw2hw_full = '0';
+		wait for C_CLK_PRD;
+
+		tb_o_osif.sw2hw_data <= word;
+
+		-- BUG in simulation (assuming fifo is free)
+		--wait until tb_i_osif.sw2hw_full = '0';
 		wait for C_CLK_PRD;
 
 		tb_o_osif.sw2hw_we <= '0';
@@ -358,8 +362,8 @@ package body reconos_pkg_tb is
 		signal tb_i_osif : in  tb_i_osif_t;
 		signal tb_o_osif : out tb_o_osif_t
 	) is
+		variable ctrl   : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable cmd    : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
-		variable handle : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable word   : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 	begin
 		tb_o_osif.hw2sw_re <= '1';
@@ -367,9 +371,14 @@ package body reconos_pkg_tb is
 		wait until tb_i_osif.hw2sw_empty = '0';
 		wait for C_CLK_PRD;
 
+		ctrl := tb_i_osif.hw2sw_data;
+
+		wait until tb_i_osif.hw2sw_empty = '0';
+		wait for C_CLK_PRD;
+
 		cmd := tb_i_osif.hw2sw_data;
 		assert cmd = OSIF_CMD_MBOX_PUT
-		  report "[ReconOS Testbench] " &
+		  report "[ReconOS Testbench - 0x" & hex(ctrl) & "]" &
 		         "ERROR: Wrong command received: " &
 		         "0x" & hex(cmd) & " but expected 0x" & hex(OSIF_CMD_MBOX_PUT)
 		  severity failure;
@@ -377,21 +386,22 @@ package body reconos_pkg_tb is
 		wait until tb_i_osif.hw2sw_empty = '0';
 		wait for C_CLK_PRD;
 
-		handle := tb_i_osif.hw2sw_data;
-
-		wait until tb_i_osif.hw2sw_empty = '0';
-		wait for C_CLK_PRD;
-
 		word := tb_i_osif.hw2sw_data;
-		report "[ReconOS Testbench] " &
-		       "OSIF-Call mbox_put (0x" & hex(handle) & "): 0x" & hex(word);
+		report "[ReconOS Testbench - 0x" & hex(ctrl) & "]" &
+		       "OSIF-Call mbox_put: 0x" & hex(word);
 
 		tb_o_osif.hw2sw_re <= '0';
 
 		tb_o_osif.sw2hw_we <= '1';
-		tb_o_osif.sw2hw_data <= word;
+		tb_o_osif.sw2hw_data <= x"1D1DEEEE";
 
 		wait until tb_i_osif.sw2hw_full = '0';
+		wait for C_CLK_PRD;
+
+		tb_o_osif.sw2hw_data <= word;
+
+		-- BUG in simulation (assuming fifo is free)
+		--wait until tb_i_osif.sw2hw_full = '0';
 		wait for C_CLK_PRD;
 
 		tb_o_osif.sw2hw_we <= '0';
@@ -400,4 +410,4 @@ package body reconos_pkg_tb is
 	end procedure tb_osif_mbox_put;
 
 
-end package body reconos_pkg_tb;
+end package body reconos_testbench;

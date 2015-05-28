@@ -18,62 +18,15 @@
  * ======================================================================
  */
 
+<<reconos_preproc>>
+
 #ifndef RECONOS_CALLS_H
 #define RECONOS_CALLS_H
 
+#include "reconos_defs.h"
+
 #include "hls_stream.h"
 #include "ap_cint.h"
-
-/* == Constant definitions ============================================= */
-
-/*
- * General constants
- *
- *   MEMIF_CHUNK_WORDS - size of one memory request in words
- *                       (a request might be split up to meet this)
- */
-#define MEMIF_CHUNK_WORDS 64
-#define MEMIF_CHUNK_BYTES (MEMIF_CHUNK_WORDS * 4)
-#define MEMIF_CHUNK_MASK  0x000000FF
-
-/*
- * Definition of the osif commands
- *
- *   self-describing
- *
- */
-#define OSIF_CMD_THREAD_GET_INIT_DATA  0x000000A0
-#define OSIF_CMD_THREAD_GET_STATE_ADDR 0x000000A1
-#define OSIF_CMD_THREAD_EXIT           0x000000A2
-#define OSIF_CMD_THREAD_YIELD          0x000000A3
-#define OSIF_CMD_THREAD_CLEAR_SIGNAL   0x000000A4
-#define OSIF_CMD_SEM_POST              0x000000B0
-#define OSIF_CMD_SEM_WAIT              0x000000B1
-#define OSIF_CMD_MUTEX_LOCK            0x000000C0
-#define OSIF_CMD_MUTEX_UNLOCK          0x000000C1
-#define OSIF_CMD_MUTEX_TRYLOCK         0x000000C2
-#define OSIF_CMD_COND_WAIT             0x000000D0
-#define OSIF_CMD_COND_SIGNAL           0x000000D1
-#define OSIF_CMD_COND_BROADCAST        0x000000D2
-#define OSIF_CMD_MBOX_GET              0x000000F0
-#define OSIF_CMD_MBOX_PUT              0x000000F1
-#define OSIF_CMD_MBOX_TRYGET           0x000000F2
-#define OSIF_CMD_MBOX_TRYPUT           0x000000F3
-#define OSIF_CMD_MASK                  0x000000FF
-#define OSIF_CMD_YIELD_MASK            0x80000000
-
-#define OSIF_SIGNAL_THREAD_START       0x01000000
-#define OSIF_SIGNAL_THREAD_RESUME      0x01000001
-
-#define OSIF_INTERRUPTED               0x000000FF
-
-/*
- * Definition of memif commands
- *
- *   self-describing
- */
-#define MEMIF_CMD_READ 0x00000000
-#define MEMIF_CMD_WRITE 0xF0000000
 
 
 /* == Internal functions =============================================== */
@@ -107,6 +60,9 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
 	return data;
 }
 
+#define CONCAT_CTRL(src,dst,length)\
+	apint_concatenate(apint_concatenate((uint8)(a),(uint8)(b)), uint16(c))
+
 /* == Call functions =================================================== */
 
 /*
@@ -121,19 +77,14 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
 	type name[size]
 
 /*
- * Initializes the thread and reads from the osif the resume status.
- */
-#define THREAD_INIT()\
- 	stream_read(osif_sw2hw)
-
-/*
  * Posts the semaphore specified by handle.
  *
  *   @see sem_post
  */
-#define SEM_POST(p_handle)(\
+#define SEM_POST(res)(\
+	stream_write(CONCAT_CTRL(__run_id, res, 0x0001)),\
 	stream_write(osif_hw2sw, OSIF_CMD_SEM_POST),\
-	stream_write(osif_hw2sw, p_handle),\
+	stream_read(osif_sw2hw),\
 	stream_read(osif_sw2hw))
 
 /*
@@ -141,9 +92,10 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
  *
  *   @see sem_wait
  */
-#define SEM_WAIT(p_handle)(\
+#define SEM_WAIT(res)(\
+	stream_write(CONCAT_CTRL(__run_id, res, 0x0001)),\
 	stream_write(osif_hw2sw, OSIF_CMD_SEM_WAIT),\
-	stream_write(osif_hw2sw, p_handle),\
+	stream_read(osif_sw2hw),\
 	stream_read(osif_sw2hw))
 
 /*
@@ -151,9 +103,10 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
  *
  *   @see pthread_mutex_lock
  */
-#define MUTEX_LOCK(p_handle)(\
+#define MUTEX_LOCK(res)(\
+	stream_write(CONCAT_CTRL(__run_id, res, 0x0001)),\
 	stream_write(osif_hw2sw, OSIF_CMD_MUTEX_LOCK),\
-	stream_write(osif_hw2sw, p_handle),\
+	stream_read(osif_sw2hw),\
 	stream_read(osif_sw2hw))
 
 /*
@@ -161,9 +114,10 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
  *
  *   @see pthread_mutex_unlock
  */
-#define MUTEX_UNLOCK(p_handle)(\
+#define MUTEX_UNLOCK(res)(\
+	stream_write(CONCAT_CTRL(__run_id, res, 0x0001)),\
 	stream_write(osif_hw2sw, OSIF_CMD_MUTEX_UNLOCK),\
-	stream_write(osif_hw2sw, p_handle),\
+	stream_read(osif_sw2hw),\
 	stream_read(osif_sw2hw))
 
 /*
@@ -171,39 +125,10 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
  *
  *   @see pthread_mutex_trylock
  */
-#define MUTEX_TRYLOCK(p_handle)(\
+#define MUTEX_TRYLOCK(res)(\
+	stream_write(CONCAT_CTRL(__run_id, res, 0x0001)),\
 	stream_write(osif_hw2sw, OSIF_CMD_MUTEX_TRYLOCK),\
-	stream_write(osif_hw2sw, p_handle),\
-	stream_read(osif_sw2hw))
-
-/*
- * Waits for the condition variable specified by handle.
- *
- *   @see pthread_cond_wait
- */
-#define COND_WAIT(p_handle,p_handle2)(\
-	stream_write(osif_hw2sw, OSIF_CMD_COND_WAIT),\
-	stream_write(osif_hw2sw, p_handle),\
-	stream_read(osif_sw2hw))
-
-/*
- * Signals a single thread waiting on the condition variable specified by handle.
- *
- *   @see pthread_cond_signal
- */
-#define COND_SIGNAL(p_handle,p_handle2)(\
-	stream_write(osif_hw2sw, OSIF_CMD_COND_SIGNAL),\
-	stream_write(osif_hw2sw, p_handle),\
-	stream_read(osif_sw2hw))
-
-/*
- * Signals all threads waiting on the condition variable specified by handle.
- *
- *   @see pthread_cond_broadcast
- */
-#define COND_BROADCAST(p_handle,p_handle2)(\
-	stream_write(osif_hw2sw, OSIF_CMD_COND_BROADCAST),\
-	stream_write(osif_hw2sw, p_handle),\
+	stream_read(osif_sw2hw),\
 	stream_read(osif_sw2hw))
 
 /*
@@ -211,9 +136,10 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
  *
  *   @see mbox_get
  */
-#define MBOX_GET(p_handle)(\
+#define MBOX_GET(res)(\
+	stream_write(CONCAT_CTRL(__run_id, res, 0x0001)),\
 	stream_write(osif_hw2sw, OSIF_CMD_MBOX_GET),\
-	stream_write(osif_hw2sw, p_handle),\
+	stream_read(osif_sw2hw),\
 	stream_read(osif_sw2hw))
 
 /*
@@ -221,10 +147,11 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
  *
  *   @see mbox_put
  */
-#define MBOX_PUT(p_handle,data)(\
+#define MBOX_PUT(res,data)(\
+	stream_write(CONCAT_CTRL(__run_id, res, 0x0002)),\
 	stream_write(osif_hw2sw, OSIF_CMD_MBOX_PUT),\
-	stream_write(osif_hw2sw, p_handle),\
 	stream_write(osif_hw2sw, data),\
+	stream_read(osif_sw2hw),\
 	stream_read(osif_sw2hw))
 
 /*
@@ -233,9 +160,10 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
  *
  *   @see mbox_tryget
  */
-#define MBOX_TRYGET(p_handle,data)(\
+#define MBOX_TRYGET(res,data)(\
+	stream_write(CONCAT_CTRL(__run_id, res, 0x0001)),\
 	stream_write(osif_hw2sw, OSIF_CMD_MBOX_TRYGET),\
-	stream_write(osif_hw2sw, p_handle),\
+	stream_read(osif_sw2hw),\
 	data = stream_read(osif_sw2hw),\
 	stream_read(osif_sw2hw))
 
@@ -245,10 +173,11 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
  *
  *   @see mbox_tryput
  */
-#define MBOX_TRYPUT(p_handle,data)(\
+#define MBOX_TRYPUT(res,data)(\
+	stream_write(CONCAT_CTRL(__run_id, res, 0x0002)),\
 	stream_write(osif_hw2sw, OSIF_CMD_MBOX_TRYPUT),\
-	stream_write(osif_hw2sw, p_handle),\
 	stream_write(osif_hw2sw, data),\
+	stream_read(osif_sw2hw),\
 	stream_read(osif_sw2hw))
 
 /*
@@ -256,7 +185,9 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
  * specified by reconos_hwt_setinitdata.
  */
 #define GET_INIT_DATA()(\
+	stream_write(CONCAT_CTRL(__run_id, 0xFF, 0x0001)),\
 	stream_write(osif_hw2sw, OSIF_CMD_THREAD_GET_INIT_DATA),\
+	stream_read(osif_sw2hw),\
 	stream_read(osif_hw2sw))
 
 /*
@@ -321,11 +252,5 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
 			__rem -= 4;\
 		}\
 	}}
-
-/*
- * Terminates the current ReconOS thread.
- */
-#define THREAD_EXIT()(\
-	pthread_exit(0))
 
 #endif /* RECONOS_CALLS_H */

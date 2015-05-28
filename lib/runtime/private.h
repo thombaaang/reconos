@@ -21,6 +21,7 @@
 #define RECONOS_PRIVATE_H
 
 #include "reconos.h"
+#include "reconos_defs.h"
 #include "utils.h"
 
 #include <stdint.h>
@@ -66,46 +67,57 @@ void *proc_pgfhandler(void *arg);
 /*
  * Object representing a hardware slot on the FPGA.
  *
- *   id        - global id as used in the hardware design
+ *   id - global id as used in the hardware design
+ *   rt - pointer to the currently executing thread
  *
- *   osif      - file descriptor of the osif
- *
- *   rt        - pointer to the currently executing threads
- *   dt        - reference to the delegate thread
- *   dt_state  - state of the delegate thread
- *   dt_flags  - flags to the delegate thread
- *   dt_exit   - semaphore for synchronizing with the delegate on exit
+ *   osif     - file descriptor of the osif
+ *   dt       - reference to the delegate thread
+ *   dt_state - state of the delegate thread
+ *   dt_flags - flags to the delegate thread
+ *   dt_exit  - semaphore for synchronizing with the delegate on exit
  */
 struct hwslot {
 	int id;
+	struct reconos_thread *rt;
 
 	int osif;
-
-	struct reconos_thread *rt;
 	pthread_t dt;
+#if 0
 	int dt_state;
 	int dt_flags;
 	sem_t dt_exit;
+#endif
 };
 
 /*
  * Initializes the slot.
  *
- *   slot - pointer to the ReconOS slot
+ *   slot - pointer to the hardware slot
  */
 void hwslot_init(struct hwslot *slot, int id, int osif);
 
 /*
+ * Executes the given ReconOS thread in the slot by resetting
+ * the hardware and reconfiguring it if needed. Running threads
+ * will be killed or an error occurs.
+ *
+ *   slot - pointer to the hardware slot
+ *   rt   - pointer to the ReconOS thread
+ */
+void hwslot_createthread(struct hwslot *slot,
+                         struct reconos_thread *rt);
+
+/*
  * Reset the slot.
  *
- *   slot  - pointer to the ReconOS slot
+ *   slot  - pointer to the hardware slot
  */
 void hwslot_reset(struct hwslot *slot);
 
 /*
  * Sets the reset of the slot.
  *
- *   slot  - pointer to the ReconOS slot
+ *   slot  - pointer to the hardware slot
  *   reset - zero or one to set the reset
  */
 void hwslot_setreset(struct hwslot *slot, int reset);
@@ -113,41 +125,23 @@ void hwslot_setreset(struct hwslot *slot, int reset);
 /*
  * Sets the signal of the slot.
  *
- *   slot  - pointer to the ReconOS slot
+ *   slot  - pointer to the hardware slot
  *   reset - zero or one to set the signal
  */
 void hwslot_setsignal(struct hwslot *slot, int sig);
 
 /*
- * Creates a new delegate thread if not present.
- *
- *   slot - pointer to the ReconOS slot
- */
-void hwslot_createdelegate(struct hwslot *slot);
-
-/*
  * Stops the delegate thread at an appropriate point in time
  *
- *   slot - pointer to the ReconOS slot
+ *   slot - pointer to the hardware slot
  */
 void hwslot_stopdelegate(struct hwslot *slot);
-
-/*
- * Executes the given ReconOS thread in the slot by resetting
- * the hardware and reconfiguring it if needed. Running threads
- * will be killed or an error occurs.
- *
- *   slot - pointer to the ReconOS slot
- *   rt   - pointer to the ReconOS thread
- */
-void hwslot_createthread(struct hwslot *slot,
-                         struct reconos_thread *rt);
 
 /*
  * Suspends the active thread by saving its state and termination the
  * delegate thread.
  *
- *   slot - pointer to the ReconOS slot
+ *   slot - pointer to the hardware slot
  */
 void hwslot_suspendthread(struct hwslot *slot);
 
@@ -155,7 +149,7 @@ void hwslot_suspendthread(struct hwslot *slot);
  * Resumes the thread by restoring its state. Running threads will be
  * killed or an error occurs.
  *
- *   slot - pointer to the ReconOS slot
+ *   slot - pointer to the hardware slot
  */
 void hwslot_resumethread(struct hwslot *slot,
                          struct reconos_thread *rt);
@@ -164,43 +158,64 @@ void hwslot_resumethread(struct hwslot *slot,
  * Waits for the termination of the running thread and resets the thread
  * afterwards.
  *
- *   slot - pointer to the ReconOS slot
+ *   slot - pointer to the hardware slot
  */
 void hwslot_jointhread(struct hwslot *slot);
 
-
-/* == ReconOS delegate ================================================= */
-
 /*
- * Definition of the osif commands
+ * Finds a free slot from all available slots.
  *
- *   self-describing
+ *   @returns pointer to free slot
  *
  */
-#define OSIF_CMD_THREAD_GET_INIT_DATA  0x000000A0
-#define OSIF_CMD_THREAD_GET_STATE_ADDR 0x000000A1
-#define OSIF_CMD_THREAD_EXIT           0x000000A2
-#define OSIF_CMD_THREAD_YIELD          0x000000A3
-#define OSIF_CMD_THREAD_CLEAR_SIGNAL   0x000000A4
-#define OSIF_CMD_SEM_POST              0x000000B0
-#define OSIF_CMD_SEM_WAIT              0x000000B1
-#define OSIF_CMD_MUTEX_LOCK            0x000000C0
-#define OSIF_CMD_MUTEX_UNLOCK          0x000000C1
-#define OSIF_CMD_MUTEX_TRYLOCK         0x000000C2
-#define OSIF_CMD_COND_WAIT             0x000000D0
-#define OSIF_CMD_COND_SIGNAL           0x000000D1
-#define OSIF_CMD_COND_BROADCAST        0x000000D2
-#define OSIF_CMD_MBOX_GET              0x000000F0
-#define OSIF_CMD_MBOX_PUT              0x000000F1
-#define OSIF_CMD_MBOX_TRYGET           0x000000F2
-#define OSIF_CMD_MBOX_TRYPUT           0x000000F3
-#define OSIF_CMD_MASK                  0x000000FF
-#define OSIF_CMD_YIELD_MASK            0x80000000
+struct hwslot *hwslot_findfree();
 
-#define OSIF_SIGNAL_THREAD_START       0x01000000
-#define OSIF_SIGNAL_THREAD_RESUME      0x01000001
 
-#define OSIF_INTERRUPTED               0x000000FF
+/* == ReconOS swslot =================================================== */
+
+/*
+ * Object representing a software slot.
+ *
+ *   id - global id
+ *   rt - pointer to the currently executing thread
+ *
+ *   osif      - file descriptor of the osif
+ *   pthread_t - reference to thread
+ */
+struct swslot {
+	int id;
+	struct reconos_thread *rt;
+
+	int osif;
+	pthread_t thread;
+};
+
+/*
+ * Initializes the slot.
+ *
+ *   slot - pointer to the software slot
+ */
+void swslot_init(struct swslot *slot, int id, int osif);
+
+/*
+ * Executes the given ReconOS thread in the slot by sarting a pthread.
+ *
+ *   slot - pointer to the hardware slot
+ *   rt   - pointer to the ReconOS thread
+ */
+void swslot_createthread(struct swslot *slot,
+                         struct reconos_thread *rt);
+
+/*
+ * Finds a free slot from all available slots.
+ *
+ *   @returns pointer to free slot
+ *
+ */
+struct swslot *swslot_findfree();
+
+
+/* == ReconOS delegate ================================================= */
 
 /*
  * Global method of the delegate thread

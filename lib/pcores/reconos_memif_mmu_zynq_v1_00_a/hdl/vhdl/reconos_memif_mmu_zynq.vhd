@@ -22,7 +22,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library reconos_v3_01_a;
-use reconos_v3_01_a.reconos_pkg.all;
+use reconos_v3_01_a.reconos_defs.all;
 
 library reconos_memif_mmu_zynq_v1_00_a;
 use reconos_memif_mmu_zynq_v1_00_a.tlb;

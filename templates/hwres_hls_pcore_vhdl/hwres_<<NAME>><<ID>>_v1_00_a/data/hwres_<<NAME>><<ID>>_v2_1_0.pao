@@ -1,0 +1,6 @@
+<<reconos_preproc>>
+
+lib hwres_<<NAME>><<ID>>_v1_00_a hwres_<<NAME>><<ID>> vhdl
+<<generate for INCLUDES>>
+lib hwres_<<NAME>><<ID>>_v1_00_a <<File>> vhdl
+<<end generate>>

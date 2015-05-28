@@ -1,0 +1,26 @@
+<<reconos_preproc>>
+
+BEGIN hwres_<<NAME>><<ID>>
+
+## Peripheral Options
+OPTION IPTYPE      = PERIPHERAL
+OPTION IMP_NETLIST = TRUE
+OPTION HDL         = VHDL
+
+## Bus Interfaces
+BUS_INTERFACE BUS=OSIF_In, BUS_STD=FIFO_S, BUS_TYPE=INITIATOR
+BUS_INTERFACE BUS=OSIF_Out, BUS_STD=FIFO_M, BUS_TYPE=INITIATOR
+
+## Peripheral ports
+PORT OSIF_In_Data = "FIFO_S_Data", DIR = I, VEC = [31:0], BUS = OSIF_In
+PORT OSIF_In_Empty = "FIFO_S_Empty", DIR = I, BUS = OSIF_In
+PORT OSIF_In_RE = "FIFO_S_RE", DIR = O, BUS = OSIF_In
+
+PORT OSIF_Out_Data = "FIFO_M_Data", DIR = O, VEC = [31:0], BUS = OSIF_Out
+PORT OSIF_Out_Full = "FIFO_M_Full", DIR = I, BUS = OSIF_Out
+PORT OSIF_Out_WE = "FIFO_M_WE", DIR = O, BUS = OSIF_Out
+
+PORT SYS_Clk = "", DIR = I, SIGIS = Clk
+PORT SYS_Rst = "", DIR = I, SIGIS = Rst
+
+END

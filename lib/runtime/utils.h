@@ -25,6 +25,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #define RECONOS_NODEBUG
 
@@ -44,6 +45,7 @@ static inline void panic(char *msg, ...) {
 	va_start(vl, msg);
 	vfprintf(stderr, msg, vl);
 	va_end(vl);
+	fprintf(stderr, "\n");
 
 	fflush(stderr);
 	die();
@@ -55,8 +57,26 @@ static inline void whine(char *msg, ...) {
 	va_start(vl, msg);
 	vfprintf(stderr, msg, vl);
 	va_end(vl);
+	fprintf(stderr, "\n");
 
 	fflush(stderr);
+}
+
+static inline void debug_array(uint32_t *arr, size_t count,
+                               char *msg, ...) {
+	va_list vl;
+	int i;
+
+	va_start(vl, msg);
+	vfprintf(stdout, msg, vl);
+	va_end(vl);
+
+	for (i = 0; i < count; i++) {
+		fprintf(stdout, "0x%08x ", arr[i]);
+	}
+	fprintf(stdout, "\n");
+
+	fflush(stdout);
 }
 
 #endif /* RECONOS_UTILS_H */

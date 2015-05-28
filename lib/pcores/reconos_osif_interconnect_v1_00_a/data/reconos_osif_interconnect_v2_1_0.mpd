@@ -1,0 +1,70 @@
+<<reconos_preproc>>
+
+BEGIN reconos_osif_interconnect
+
+## Peripheral Options
+OPTION IPTYPE = PERIPHERAL
+OPTION IMP_NETLIST = TRUE
+OPTION HDL = VHDL
+OPTION IP_GROUP = ReconOS
+OPTION DESC = ReconOS - OSIF Interconnect
+OPTION LONG_DESC = Reconfigurable interconnect for direct communication of hardware threads.
+OPTION ARCH_SUPPORT_MAP = (others=DEVELOPMENT)
+
+## Bus Interfaces
+<<generate for SLOTS>>
+BUS_INTERFACE BUS = OSIF_Hw2Ic_<<Id>>, BUS_STD = FIFO_M, BUS_TYPE = TARGET
+BUS_INTERFACE BUS = OSIF_Ic2Hw_<<Id>>, BUS_STD = FIFO_S, BUS_TYPE = TARGET
+<<end generate>>
+
+<<generate for RESOURCES(Mode == "hw")>>
+BUS_INTERFACE BUS = OSIF_Res2Ic_<<Id>>, BUS_STD = FIFO_M, BUS_TYPE = TARGET
+BUS_INTERFACE BUS = OSIF_Ic2Res_<<Id>>, BUS_STD = FIFO_S, BUS_TYPE = TARGET
+<<end generate>>
+
+BUS_INTERFACE BUS = OSIF_Sw2Ic, BUS_STD = FIFO_M, BUS_TYPE = TARGET
+BUS_INTERFACE BUS = OSIF_Ic2Sw, BUS_STD = FIFO_S, BUS_TYPE = TARGET
+
+## Generics for VHDL or Parameters for Verilog
+PARAMETER C_NUM_HWTS = 1, DT = INTEGER
+
+PARAMETER C_OSIF_DATA_WIDTH = 32, DT = INTEGER, ASSIGNMENT = CONSTANT
+
+## Ports
+<<generate for SLOTS>>
+PORT OSIF_Hw2Ic_<<Id>>_Data = "FIFO_M_Data", DIR = I, VEC = [C_OSIF_DATA_WIDTH - 1 : 0], BUS = OSIF_Hw2Ic_<<Id>>
+PORT OSIF_Hw2Ic_<<Id>>_Full = "FIFO_M_Full", DIR = O, BUS = OSIF_Hw2Ic_<<Id>>
+PORT OSIF_Hw2Ic_<<Id>>_WE = "FIFO_M_WE", DIR = I, BUS = OSIF_Hw2Ic_<<Id>>
+<<end generate>>
+
+<<generate for SLOTS>>
+PORT OSIF_Ic2Hw_<<Id>>_Data = "FIFO_S_Data", DIR = O, VEC = [C_OSIF_DATA_WIDTH - 1 : 0], BUS = OSIF_Ic2Hw_<<Id>>
+PORT OSIF_Ic2Hw_<<Id>>_Empty = "FIFO_S_Empty", DIR = O, BUS = OSIF_Ic2Hw_<<Id>>
+PORT OSIF_Ic2Hw_<<Id>>_RE = "FIFO_S_RE", DIR = I, BUS = OSIF_Ic2Hw_<<Id>>
+<<end generate>>
+
+<<generate for RESOURCES(Mode == "hw")>>
+PORT OSIF_Res2Ic_<<Id>>_Data = "FIFO_M_Data", DIR = I, VEC = [C_OSIF_DATA_WIDTH - 1 : 0], BUS = OSIF_Res2Ic_<<Id>>
+PORT OSIF_Res2Ic_<<Id>>_Full = "FIFO_M_Full", DIR = O, BUS = OSIF_Res2Ic_<<Id>>
+PORT OSIF_Res2Ic_<<Id>>_WE = "FIFO_M_WE", DIR = I, BUS = OSIF_Res2Ic_<<Id>>
+<<end generate>>
+
+<<generate for RESOURCES(Mode == "hw")>>
+PORT OSIF_Ic2Res_<<Id>>_Data = "FIFO_S_Data", DIR = O, VEC = [C_OSIF_DATA_WIDTH - 1 : 0], BUS = OSIF_Ic2Res_<<Id>>
+PORT OSIF_Ic2Res_<<Id>>_Empty = "FIFO_S_Empty", DIR = O, BUS = OSIF_Ic2Res_<<Id>>
+PORT OSIF_Ic2Res_<<Id>>_RE = "FIFO_S_RE", DIR = I, BUS = OSIF_Ic2Res_<<Id>>
+<<end generate>>
+
+PORT OSIF_Sw2Ic_Data = "FIFO_M_Data", DIR = I, VEC = [C_OSIF_DATA_WIDTH - 1 : 0], BUS = OSIF_Sw2Ic
+PORT OSIF_Sw2Ic_Full = "FIFO_M_Full", DIR = O, BUS = OSIF_Sw2Ic
+PORT OSIF_Sw2Ic_WE = "FIFO_M_WE", DIR = I, BUS = OSIF_Sw2Ic
+
+PORT OSIF_Ic2Sw_Data = "FIFO_S_Data", DIR = O, VEC = [C_OSIF_DATA_WIDTH - 1 : 0], BUS = OSIF_Ic2Sw
+PORT OSIF_Ic2Sw_Empty = "FIFO_S_Empty", DIR = O, BUS = OSIF_Ic2Sw
+PORT OSIF_Ic2Sw_RE = "FIFO_S_RE", DIR = I, BUS = OSIF_Ic2Sw
+PORT OSIF_Ic2Sw_Has_Data = "", DIR = O, SIGIS = INTERRUPT, SENSITIVITY = LEVEL_HIGH
+
+PORT SYS_Clk = "", DIR = I, SIGIS = CLK
+PORT SYS_Rst = "", DIR = I, SIGIS = RST
+
+END

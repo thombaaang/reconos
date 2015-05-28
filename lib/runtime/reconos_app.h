@@ -39,24 +39,23 @@
  *   mutex - mutex (pthread_mutex)
  *   cond  - condition variable (pthread_cond)
  */
-<<generate for RESOURCES(Type == "mbox")>>
+<<generate for RESOURCES(Type == "mbox" and Mode == "sw")>>
 extern struct mbox <<NameLower>>_s;
-extern struct mbox *<<NameLower>>;
+extern struct mbox *<<NameLower>>_ptr;
 <<end generate>>
 
-<<generate for RESOURCES(Type == "sem")>>
+<<generate for RESOURCES(Type == "sem" and Mode == "sw")>>
 extern sem_t <<NameLower>>_s;
-extern sem_t *<<NameLower>>;
+extern sem_t *<<NameLower>>_ptr;
 <<end generate>>
 
-<<generate for RESOURCES(Type == "mutex")>>
+<<generate for RESOURCES(Type == "mutex" and Mode == "sw")>>
 extern pthread_mutex_t <<NameLower>>_s;
-extern pthread_mutex_t *<<NameLower>>;
+extern pthread_mutex_t *<<NameLower>>_ptr;
 <<end generate>>
 
-<<generate for RESOURCES(Type == "cond")>>
-extern pthread_cond_t <<NameLower>>_s;
-extern pthread_cond_t *<<NameLower>>;
+<<generate for RESOURCES>>
+extern struct reconos_resource *<<NameLower>>;
 <<end generate>>
 
 

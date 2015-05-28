@@ -20,7 +20,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library reconos_v3_01_a;
-use reconos_v3_01_a.reconos_pkg.all;
+use reconos_v3_01_a.reconos_defs.all;
 
 entity user_logic is
 	--

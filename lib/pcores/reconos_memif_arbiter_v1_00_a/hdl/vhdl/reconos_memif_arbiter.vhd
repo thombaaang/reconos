@@ -23,7 +23,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library reconos_v3_01_a;
-use reconos_v3_01_a.reconos_pkg.all;
+use reconos_v3_01_a.reconos_defs.all;
 
 entity reconos_memif_arbiter is
 	--
@@ -137,7 +137,6 @@ begin
 	--   snoops on the fifos to figure out the end of a transaction.
 	--
 	arb : process(SYS_Clk,SYS_Rst) is
-		variable i : integer range 1 to C_NUM_HWTS;
 	begin
 		if SYS_Rst = '1' then
 			msk <= (others => '1');
