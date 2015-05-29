@@ -343,6 +343,7 @@ static ssize_t osif_read(struct file *filp, char __user *buf,
                          size_t count, loff_t *offp) {
 	struct osif_filp *inst;
 	struct msg *msg;
+	unsigned long flags;
 
 	inst = (struct osif_filp *)(filp->private_data);
 
@@ -373,10 +374,10 @@ static ssize_t osif_read(struct file *filp, char __user *buf,
 	                    inst->ctrl_mask, inst->ctrl_bits,
 	                    msg->data[0], msg->data[1], msg->count);
 
-	spin_lock(&inst->dev->read_lock);
+	spin_lock_irqsave(&inst->dev->read_lock, flags);
 	list_del(&msg->list);
 	inst->msgs_len--;
-	spin_unlock(&inst->dev->read_lock);
+	spin_unlock_irqrestore(&inst->dev->read_lock, flags);
 
 	msg_free(msg);
 
