@@ -41,7 +41,8 @@ def _gen_preproc(scope):
 			return m.string[m.start():m.end()]
 
 		data = ""
-		for i, r in enumerate(value):
+		i = 0
+		for r in value:
 			local = {"_i" : i}
 			local.update(r)
 			nscope = [local] + scope
@@ -77,6 +78,7 @@ def _gen_preproc(scope):
 				ndata += "\n"
 
 			data += ndata
+			i += 1
 
 		return data
 
