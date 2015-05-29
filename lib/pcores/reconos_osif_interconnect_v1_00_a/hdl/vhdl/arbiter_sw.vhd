@@ -45,7 +45,7 @@ entity arbiter_icout_sw is
 	--   SYS_Rst - system reset
 	--
 	port (
-		FIFO_Out_Data  : out  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
+		FIFO_Out_Data  : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		FIFO_Out_Empty : out std_logic;
 		FIFO_Out_RE    : in  std_logic;
 
