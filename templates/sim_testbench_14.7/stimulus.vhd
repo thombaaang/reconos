@@ -47,8 +47,10 @@ begin
 		wait for C_CLK_PRD * 10;
 		SYS_Rst <= '0';
 		wait for C_CLK_PRD;
-		tb_o_osif.sw2hw_data <= OSIF_SIGNAL_THREAD_START;
+		tb_o_osif.sw2hw_data <= x"FF000002";
 		tb_o_osif.sw2hw_we <= '1';
+		wait for C_CLK_PRD;
+		tb_o_osif.sw2hw_data <= OSIF_SIGNAL_THREAD_START;
 		wait for C_CLK_PRD;
 		tb_o_osif.sw2hw_data <= x"00000000";
 		wait for C_CLK_PRD;

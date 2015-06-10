@@ -60,11 +60,6 @@
       <library xil_pn:name="rt_<<THREAD>>_v1_00_a"/>
     </file>
     <<end generate>>
-    <file xil_pn:name="reconos_thread.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="1"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="1"/>
-      <library xil_pn:name="rt_<<THREAD>>_v1_00_a"/>
-    </file>
   </files>
 
   <autoManagedFiles>

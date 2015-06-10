@@ -336,7 +336,7 @@ package body reconos_testbench is
 
 		tb_o_osif.hw2sw_re <= '0';
 		tb_o_osif.sw2hw_we <= '1';
-		tb_o_osif.sw2hw_data <= x"1D1DEEEE";
+		tb_o_osif.sw2hw_data <= x"FF000001";
 
 		report "[ReconOS Testbench - 0x" & hex(ctrl) & "]" &
 		       "OSIF-Call mbox_get: 0x" & hex(word);
@@ -393,7 +393,7 @@ package body reconos_testbench is
 		tb_o_osif.hw2sw_re <= '0';
 
 		tb_o_osif.sw2hw_we <= '1';
-		tb_o_osif.sw2hw_data <= x"1D1DEEEE";
+		tb_o_osif.sw2hw_data <= x"FF000001";
 
 		wait until tb_i_osif.sw2hw_full = '0';
 		wait for C_CLK_PRD;
