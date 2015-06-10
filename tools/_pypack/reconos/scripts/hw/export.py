@@ -39,24 +39,23 @@ def export_hw_cmd(args):
 
 def export_hw(args, hwdir, link):
 	if args.prj.impinfo.xil[0] == "ise":
-		export_hw_ise(args, hwdir, link)
+		_export_hw_ise(args.prj, hwdir, link)
 	else:
 		log.error("Xilinx tool not supported")
 
 def export_hw_thread(args, hwdir, link, thread):
 	if args.prj.impinfo.xil[0] == "ise":
-		export_hw_thread_ise(args, hwdir, link, thread)
+		_export_hw_thread_ise(args.prj, hwdir, link, thread)
 	else:
 		log.error("Xilinx tool not supported")
 
 def export_hw_res(args, hwdir, resource):
 	if args.prj.impinfo.xil[0] == "ise":
-		export_hw_res_ise(args, hwdir, resource)
+		_export_hw_res_ise(args.prj, hwdir, resource)
 	else:
 		log.error("Xilinx tool not supported")
 
-def export_hw_ise(args, hwdir, link):
-	prj = args.prj
+def _export_hw_ise(prj, hwdir, link):
 	hwdir = hwdir if hwdir is not None else prj.basedir + ".hw"
 
 	log.info("Export hardware to directory '" + hwdir + "'")
@@ -120,14 +119,13 @@ def export_hw_ise(args, hwdir, link):
 
 	log.info("Generating threads ...")
 	for t in prj.threads:
-		export_hw_thread(args, shutil2.join(hwdir, "pcores"), link, t.name)
+		_export_hw_thread_ise(prj, shutil2.join(hwdir, "pcores"), link, t.name)
 
 	log.info("Generating resources ...")
 	for r in [_ for _ in prj.resources if _.mode == "hw"]:
-		export_hw_res(args, shutil2.join(hwdir, "pcores"), r.name)
+		_export_hw_res_ise(prj, shutil2.join(hwdir, "pcores"), r.name)
 
-def export_hw_res_ise(args, hwdir, resource):
-	prj = args.prj
+def _export_hw_res_ise(prj, hwdir, resource):
 	hwdir = hwdir if hwdir is not None else prj.basedir + ".hw." + resource.lower()
 
 	log.info("Exporting resource " + resource + " to directory '" + hwdir + "'")
@@ -180,8 +178,7 @@ def export_hw_res_ise(args, hwdir, resource):
 	shutil2.mkdir("/tmp/test2")
 	shutil2.copytree(tmp.name, "/tmp/test2")
 
-def export_hw_thread_ise(args, hwdir, link, thread):
-	prj = args.prj
+def _export_hw_thread_ise(prj, hwdir, link, thread):
 	hwdir = hwdir if hwdir is not None else prj.basedir + ".hw." + thread.lower()
 
 	log.info("Exporting thread " + thread + " to directory '" + hwdir + "'")

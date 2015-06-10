@@ -26,12 +26,11 @@ def build_cmd(args):
 
 def build(args, hwdir):
 	if args.prj.impinfo.xil[0] == "ise":
-		build_ise(args, hwdir)
+		_build_ise(args.prj, hwdir)
 	else:
 		log.error("Xilinx tool not supported")
 
-def build_ise(args, hwdir):
-	prj = args.prj
+def _build_ise(prj, hwdir):
 	hwdir = hwdir if hwdir is not None else prj.basedir + ".hw"
 
 	try:
