@@ -60,7 +60,7 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
 	return data;
 }
 
-#define CONCAT_CTRL(src,dst,length)\
+#define CONCAT_CTRL(a,b,c)\
 	apint_concatenate(apint_concatenate((uint8)(a),(uint8)(b)), uint16(c))
 
 /* == Call functions =================================================== */
@@ -82,7 +82,7 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
  *   @see sem_post
  */
 #define SEM_POST(res)(\
-	stream_write(CONCAT_CTRL(__run_id, res, 0x0001)),\
+	stream_write(osif_hw2sw, CONCAT_CTRL(__run_id, res, 0x0001)),\
 	stream_write(osif_hw2sw, OSIF_CMD_SEM_POST),\
 	stream_read(osif_sw2hw),\
 	stream_read(osif_sw2hw))
@@ -93,7 +93,7 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
  *   @see sem_wait
  */
 #define SEM_WAIT(res)(\
-	stream_write(CONCAT_CTRL(__run_id, res, 0x0001)),\
+	stream_write(osif_hw2sw, CONCAT_CTRL(__run_id, res, 0x0001)),\
 	stream_write(osif_hw2sw, OSIF_CMD_SEM_WAIT),\
 	stream_read(osif_sw2hw),\
 	stream_read(osif_sw2hw))
@@ -104,7 +104,7 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
  *   @see pthread_mutex_lock
  */
 #define MUTEX_LOCK(res)(\
-	stream_write(CONCAT_CTRL(__run_id, res, 0x0001)),\
+	stream_write(osif_hw2sw, CONCAT_CTRL(__run_id, res, 0x0001)),\
 	stream_write(osif_hw2sw, OSIF_CMD_MUTEX_LOCK),\
 	stream_read(osif_sw2hw),\
 	stream_read(osif_sw2hw))
@@ -115,7 +115,7 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
  *   @see pthread_mutex_unlock
  */
 #define MUTEX_UNLOCK(res)(\
-	stream_write(CONCAT_CTRL(__run_id, res, 0x0001)),\
+	stream_write(osif_hw2sw, CONCAT_CTRL(__run_id, res, 0x0001)),\
 	stream_write(osif_hw2sw, OSIF_CMD_MUTEX_UNLOCK),\
 	stream_read(osif_sw2hw),\
 	stream_read(osif_sw2hw))
@@ -126,7 +126,7 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
  *   @see pthread_mutex_trylock
  */
 #define MUTEX_TRYLOCK(res)(\
-	stream_write(CONCAT_CTRL(__run_id, res, 0x0001)),\
+	stream_write(osif_hw2sw, CONCAT_CTRL(__run_id, res, 0x0001)),\
 	stream_write(osif_hw2sw, OSIF_CMD_MUTEX_TRYLOCK),\
 	stream_read(osif_sw2hw),\
 	stream_read(osif_sw2hw))
@@ -137,7 +137,7 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
  *   @see mbox_get
  */
 #define MBOX_GET(res)(\
-	stream_write(CONCAT_CTRL(__run_id, res, 0x0001)),\
+	stream_write(osif_hw2sw, CONCAT_CTRL(__run_id, res, 0x0001)),\
 	stream_write(osif_hw2sw, OSIF_CMD_MBOX_GET),\
 	stream_read(osif_sw2hw),\
 	stream_read(osif_sw2hw))
@@ -148,7 +148,7 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
  *   @see mbox_put
  */
 #define MBOX_PUT(res,data)(\
-	stream_write(CONCAT_CTRL(__run_id, res, 0x0002)),\
+	stream_write(osif_hw2sw, CONCAT_CTRL(__run_id, res, 0x0002)),\
 	stream_write(osif_hw2sw, OSIF_CMD_MBOX_PUT),\
 	stream_write(osif_hw2sw, data),\
 	stream_read(osif_sw2hw),\
@@ -161,7 +161,7 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
  *   @see mbox_tryget
  */
 #define MBOX_TRYGET(res,data)(\
-	stream_write(CONCAT_CTRL(__run_id, res, 0x0001)),\
+	stream_write(osif_hw2sw, CONCAT_CTRL(__run_id, res, 0x0001)),\
 	stream_write(osif_hw2sw, OSIF_CMD_MBOX_TRYGET),\
 	stream_read(osif_sw2hw),\
 	data = stream_read(osif_sw2hw),\
@@ -174,7 +174,7 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
  *   @see mbox_tryput
  */
 #define MBOX_TRYPUT(res,data)(\
-	stream_write(CONCAT_CTRL(__run_id, res, 0x0002)),\
+	stream_write(osif_hw2sw, CONCAT_CTRL(__run_id, res, 0x0002)),\
 	stream_write(osif_hw2sw, OSIF_CMD_MBOX_TRYPUT),\
 	stream_write(osif_hw2sw, data),\
 	stream_read(osif_sw2hw),\
@@ -185,7 +185,7 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
  * specified by reconos_hwt_setinitdata.
  */
 #define GET_INIT_DATA()(\
-	stream_write(CONCAT_CTRL(__run_id, 0xFF, 0x0001)),\
+	stream_write(osif_hw2sw, CONCAT_CTRL(__run_id, 0xFF, 0x0001)),\
 	stream_write(osif_hw2sw, OSIF_CMD_THREAD_GET_INIT_DATA),\
 	stream_read(osif_sw2hw),\
 	stream_read(osif_hw2sw))
