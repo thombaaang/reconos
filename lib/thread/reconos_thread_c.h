@@ -49,7 +49,7 @@ extern struct reconos_resource *<<NameLower>>;
  *   }
  }
  */
-#define THREAD_ENTRY()\
+#define THREAD_ENTRY(...)\
 	void rt_<<NAME>>(void *data)
 
 /*

@@ -50,10 +50,10 @@
  *   }
  }
  */
-#define THREAD_ENTRY() void rt_imp(hls::stream<uint32> osif_sw2hw,\
-                                   hls::stream<uint32> osif_hw2sw,\
-                                   hls::stream<uint32> memif_hwt2mem,\
-                                   hls::stream<uint32> memif_mem2hwt)
+#define THREAD_ENTRY(...) void rt_imp(<<generate for MEM>>hls::stream<uint32> memif_hwt2mem,\
+                                      hls::stream<uint32> memif_mem2hwt,\
+                                      <<end generate>>hls::stream<uint32> osif_sw2hw,\
+                                      hls::stream<uint32> osif_hw2sw __VA_ARGS__)
 
 /*
  * Initializes the thread and reads from the osif the resume status.
