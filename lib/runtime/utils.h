@@ -30,9 +30,18 @@
 #define RECONOS_NODEBUG
 
 #ifdef RECONOS_DEBUG
- #define debug(...) printf(__VA_ARGS__)
+static inline void debug(char *msg, ...) {
+	va_list vl;
+
+	va_start(vl, msg);
+	vfprintf(stdout, msg, vl);
+	va_end(vl);
+	fprintf(stdout, "\n");
+
+	fflush(stdout);
+}
 #else
- #define debug(...)
+#define debug(...)
 #endif
 
 static inline void die() {

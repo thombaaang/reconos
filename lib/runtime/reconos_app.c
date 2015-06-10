@@ -46,6 +46,11 @@ pthread_mutex_t <<NameLower>>_s;
 pthread_mutex_t *<<NameLower>>_ptr = &<<NameLower>>_s;
 <<end generate>>
 
+<<generate for RESOURCES(Type == "pipe" and Mode == "sw")>>
+struct pipe <<NameLower>>_s;
+struct pipe *<<NameLower>>_ptr = &<<NameLower>>_s;
+<<end generate>>
+
 <<generate for RESOURCES>>
 struct reconos_resource <<NameLower>>_res;
 struct reconos_resource *<<NameLower>> = &<<NameLower>>_res;
@@ -74,13 +79,17 @@ void reconos_app_init() {
 	pthread_cond_init(<<NameLower>>_ptr, NULL);
 	<<end generate>>
 
+	<<generate for RESOURCES(Type == "pipe" and Mode == "sw")>>
+	pipe_init(<<NameLower>>_ptr);
+	<<end generate>>
+
 	<<generate for RESOURCES(Mode == "sw")>>
-	reconos_resource_init(&<<NameLower>>_res, <<Id>>,
+	reconos_resource_init(&<<NameLower>>_res, <<Id|0x{:02x}>>,
 	                      RECONOS_RESOURCE_TYPE_<<TypeUpper>>, RECONOS_RESOURCE_MODE_SW,
 	                      &<<NameLower>>_s);
 	<<end generate>>
 	<<generate for RESOURCES(Mode == "hw")>>
-	reconos_resource_init(&<<NameLower>>_res, <<Id>>,
+	reconos_resource_init(&<<NameLower>>_res, <<Id|0x{:02x}>>,
 	                      RECONOS_RESOURCE_TYPE_<<TypeUpper>>, RECONOS_RESOURCE_MODE_HW,
 	                      NULL);
 	<<end generate>>
@@ -104,6 +113,10 @@ void reconos_app_cleanup() {
 
 	<<generate for RESOURCES(Type == "cond" and Mode == "sw")>>
 	pthread_cond_destroy(<<NameLower>>_ptr, NULL);
+	<<end generate>>
+
+	<<generate for RESOURCES(Type == "pipe" and Mode == "sw")>>
+	pipe_destroy(<<NameLower>>_ptr);
 	<<end generate>>
 }
 

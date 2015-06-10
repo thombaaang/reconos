@@ -102,6 +102,8 @@ package reconos_defs is
 	constant OSIF_CMD_MBOX_PUT              : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0) := x"000000F1";
 	constant OSIF_CMD_MBOX_TRYGET           : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0) := x"000000F2";
 	constant OSIF_CMD_MBOX_TRYPUT           : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0) := x"000000F3";
+	constant OSIF_CMD_PIPE_WRITE            : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0) := x"00000090";
+	constant OSIF_CMD_PIPE_READ             : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0) := x"00000091";
 	constant OSIF_CMD_MASK                  : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0) := x"000000FF";
 	constant OSIF_CMD_YIELD_MASK            : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0) := x"80000000";
 

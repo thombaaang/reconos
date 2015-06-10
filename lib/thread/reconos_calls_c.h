@@ -25,10 +25,13 @@
 #include "reconos_defs.h"
 
 #include "mbox.h"
+#include "pipe.h"
 
 #include <stdint.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <string.h>
+
 
 /* == Call functions =================================================== */
 
@@ -99,7 +102,7 @@ static inline uint32_t _MBOX_GET(struct reconos_resource *res,
 	if (res->mode == RECONOS_RESOURCE_MODE_SW) {
 		return mbox_get(res->ptr);
 	} else if (res->mode == RECONOS_RESOURCE_MODE_HW) {
-		msg[0] = (run_id << 24) | (res->id << 16) | 0x00000001;
+		msg[0] = RECONOS_OSIF_CTRL(run_id, res->id, 0x00000001);
 		msg[1] = OSIF_CMD_MBOX_GET;
 		reconos_thread_swslot_write(rt, msg, 2);
 		reconos_thread_swslot_read(rt, msg, 2);
@@ -124,7 +127,7 @@ static inline void _MBOX_PUT(struct reconos_resource *res, uint32_t data,
 	if (res->mode == RECONOS_RESOURCE_MODE_SW) {
 		mbox_put(res->ptr, data);
 	} else if (res->mode == RECONOS_RESOURCE_MODE_HW) {
-		msg[0] = (run_id << 24) | (res->id << 16) | 0x00000002;
+		msg[0] = RECONOS_OSIF_CTRL(run_id, res->id, 0x00000002);
 		msg[1] = OSIF_CMD_MBOX_PUT;
 		msg[2] = data;
 		reconos_thread_swslot_write(rt, msg, 3);
@@ -149,6 +152,69 @@ static inline void _MBOX_PUT(struct reconos_resource *res, uint32_t data,
  */
 #define MBOX_TRYPUT(p_handle,data)\
 	mbox_tryput((p_handle)->ptr, (data))
+
+/*
+ * Writes data to the pipe.
+ */
+#define PIPE_WRITE(p_handle,data,count)\
+ 	_PIPE_WRITE(p_handle, data, count, __rt, __run_id)
+
+static inline int _PIPE_WRITE(struct reconos_resource *res,
+                              void *data, size_t count,
+                              struct reconos_thread *rt, int run_id) {
+	uint32_t msg[3];
+
+	if (res->mode == RECONOS_RESOURCE_MODE_SW) {
+		return pipe_write(res->ptr, (data), (count));
+	} else if (res->mode == RECONOS_RESOURCE_MODE_HW) {
+		msg[0] = RECONOS_OSIF_CTRL(run_id, res->id, 0x00000002);
+		msg[1] = OSIF_CMD_PIPE_WRITE;
+		msg[2] = count;
+		reconos_thread_swslot_write(rt, msg, 3);
+		reconos_thread_swslot_read(rt, msg, 3);
+
+		int dst = (msg[1] & 0xFF000000) >> 24;
+		int len = msg[1] & 0x00FFFFFF;
+		msg[0] = RECONOS_OSIF_CTRL(run_id, dst, len / sizeof(uint32_t));
+		reconos_thread_swslot_write(rt, msg, 1);
+		reconos_thread_swslot_write(rt, (uint32_t *)data, len / sizeof(uint32_t));
+
+		return len;
+	}
+
+	return -1;
+}
+
+/*
+ * Reads data from the pipe.
+ */
+#define PIPE_READ(p_handle,data,count)\
+	_PIPE_READ(p_handle, data, count, __rt, __run_id)
+
+static inline int _PIPE_READ(struct reconos_resource *res,
+                             void *data, size_t count,
+                             struct reconos_thread *rt, int run_id) {
+	uint32_t msg[3];
+
+	if (res->mode == RECONOS_RESOURCE_MODE_SW) {
+		return pipe_read(res->ptr, (data), (count));
+	} else if (res->mode == RECONOS_RESOURCE_MODE_HW) {
+		msg[0] = RECONOS_OSIF_CTRL(run_id, res->id, 0x00000002);
+		msg[1] = OSIF_CMD_PIPE_READ;
+		msg[2] = count;
+		reconos_thread_swslot_write(rt, msg, 3);
+		reconos_thread_swslot_read(rt, msg, 3);
+
+		int len = msg[1] & 0x00FFFFFF;
+		uint32_t buf[len / sizeof(uint32_t) + 1];
+		reconos_thread_swslot_read(rt, buf, len / sizeof(uint32_t) + 1);
+		memcpy(data, (void *)(buf + 1), len);
+
+		return len;
+	}
+
+	return -1;
+}
 
 /*
  * Gets the pointer to the initialization data of the ReconOS thread

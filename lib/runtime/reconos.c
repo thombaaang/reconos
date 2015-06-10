@@ -1069,10 +1069,14 @@ void *dt_delegate(void *arg) {
 				RESOURCE_CHECK_TYPE(res, RECONOS_RESOURCE_TYPE_MBOX);
 				send_count = 1;
 				send[1] = mbox_get(res->ptr);
+				debug("[reconos-rt-%d] "
+				      "DEBUG: executed mbox_get on 0x%02x", slot->id, res_id, send[1]);
 				break;
 
 			case OSIF_CMD_MBOX_PUT:
 				RESOURCE_CHECK_TYPE(res, RECONOS_RESOURCE_TYPE_MBOX);
+				debug("[reconos-rt-%d] "
+				      "DEBUG: executing mbox_put on 0x%02x", slot->id, res_id);
 				mbox_put(res->ptr, recv[2]);
 				send_count = 1;
 				send[1] = 0x00000000;

@@ -25,6 +25,7 @@
 #define RECONOS_APP_H
 
 #include "mbox.h"
+#include "pipe.h"
 
 #include <pthread.h>
 #include <semaphore.h>
@@ -52,6 +53,11 @@ extern sem_t *<<NameLower>>_ptr;
 <<generate for RESOURCES(Type == "mutex" and Mode == "sw")>>
 extern pthread_mutex_t <<NameLower>>_s;
 extern pthread_mutex_t *<<NameLower>>_ptr;
+<<end generate>>
+
+<<generate for RESOURCES(Type == "pipe" and Mode == "sw")>>
+extern struct pipe <<NameLower>>_s;
+extern struct pipe *<<NameLower>>_ptr;
 <<end generate>>
 
 <<generate for RESOURCES>>

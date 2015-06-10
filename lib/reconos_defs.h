@@ -57,6 +57,7 @@
  *   RECONOS_RESOURCE_TYPE_SEM   - semaphore (sem_t)
  *   RECONOS_RESOURCE_TYPE_MUTEX - mutex (pthread_mutex)
  *   RECONOS_RESOURCE_TYPE_COND  - condition variable (pthread_cond)
+ *   RECONOS_RESOURCE_TYPE_PIPE  - pipe (struct pipe)
  *
  *   RECONOS_RESOURCE_MODE_SW - software resource
  *   RECONOS_RESOURCE_MODE_HW - hardwrae resource
@@ -65,6 +66,7 @@
 #define RECONOS_RESOURCE_TYPE_SEM   0x00000002
 #define RECONOS_RESOURCE_TYPE_MUTEX 0x00000004
 #define RECONOS_RESOURCE_TYPE_COND  0x00000008
+#define RECONOS_RESOURCE_TYPE_PIPE  0x00000010
 
 #define RECONOS_RESOURCE_MODE_SW 0x00000001
 #define RECONOS_RESOURCE_MODE_HW 0x00000002
@@ -95,6 +97,8 @@
 #define OSIF_CMD_MBOX_PUT              0x000000F1
 #define OSIF_CMD_MBOX_TRYGET           0x000000F2
 #define OSIF_CMD_MBOX_TRYPUT           0x000000F3
+#define OSIF_CMD_PIPE_WRITE            0x00000090
+#define OSIF_CMD_PIPE_READ             0x00000091
 #define OSIF_CMD_MASK                  0x000000FF
 #define OSIF_CMD_YIELD_MASK            0x80000000
 
@@ -115,6 +119,8 @@
  *   RECONOS_OSIF_SRC    - returns source id of control word
  *   RECONOS_OSIF_DST    - returns destination id of control word
  *   RECONOS_OSIF_LENGTH - returns length id of control word
+ *
+ *   RECONOS_OSIF_CTRL - creates control word from source, destination and length
  */
 #define RECONOS_OSIF_DATA_WIDTH  32
 
@@ -125,6 +131,8 @@
 #define RECONOS_OSIF_SRC(ctrl)    ((ctrl & RECONOS_OSIF_SRC_MASK) >> 24)
 #define RECONOS_OSIF_DST(ctrl)    ((ctrl & RECONOS_OSIF_DST_MASK) >> 16)
 #define RECONOS_OSIF_LENGTH(ctrl) ((ctrl & RECONOS_OSIF_LENGTH_MASK >> 0))
+
+#define RECONOS_OSIF_CTRL(src, dst, len) (((src) << 24) | ((dst) << 16) | ((len) << 0))
 
 
 /* == ReconOS hardware ================================================= */
