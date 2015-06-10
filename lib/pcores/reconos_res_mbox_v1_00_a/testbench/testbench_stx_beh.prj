@@ -1,6 +1,0 @@
-vhdl isim_temp "FIFO_top_queue_put_V_V.vhd"
-vhdl isim_temp "FIFO_top_queue_get_V_V.vhd"
-vhdl isim_temp "FIFO_top_mbox_V_V.vhd"
-vhdl isim_temp "top.vhd"
-vhdl isim_temp "reconos_fifo_sync.vhd"
-vhdl isim_temp "testbench.vhd"
