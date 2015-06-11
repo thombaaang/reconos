@@ -59,6 +59,8 @@ modules.builtin
 # some specific files
 #
 *.dtb
+*.dat
+*.pdf
 
 #
 # some ReconOS specific stuff
