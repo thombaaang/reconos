@@ -35,28 +35,44 @@ void pipe_destroy(struct pipe* pipe) {
 /*
  * @see header
  */
-ssize_t pipe_read(struct pipe* pipe, void *data, size_t count) {
-	pipe->count = count;
-	pipe->buf = data;
+ssize_t pipe_write(struct pipe* pipe, void *data, size_t len) {
+	sem_wait(&pipe->read);
 
-	sem_post(&pipe->read);
-	sem_wait(&pipe->write);
+	if (len < pipe->len) {
+		pipe->len = len;
+	}
+	memcpy(pipe->buf, data, pipe->len);
 
-	return pipe->count;
+	sem_post(&pipe->write);
+
+	return pipe->len;
+}
+
+ssize_t pipe_writereq(struct pipe *pipe, size_t len) {
+	sem_wait(&pipe->read);
+
+	if (len < pipe->len) {
+		pipe->len = len;
+	}
+
+	return pipe->len;
+}
+
+void pipe_writeareq(struct pipe *pipe, void *data) {
+	memcpy(pipe->buf, data, pipe->len);
+
+	sem_post(&pipe->write);
 }
 
 /*
  * @see header
  */
-ssize_t pipe_write(struct pipe* pipe, void *data, size_t count) {
-	sem_wait(&pipe->read);
+ssize_t pipe_read(struct pipe* pipe, void *data, size_t len) {
+	pipe->len = len;
+	pipe->buf = data;
 
-	if (count < pipe->count) {
-		pipe->count = count;
-	}
-	memcpy(pipe->buf, data, pipe->count);
+	sem_post(&pipe->read);
+	sem_wait(&pipe->write);
 
-	sem_post(&pipe->write);
-
-	return pipe->count;
+	return pipe->len;
 }

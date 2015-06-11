@@ -39,7 +39,7 @@
  *   stream - reference to stream
  *   data   - data to write
  */
-inline void stream_write(hls::stream<uint32> &stream, uint32 data) {
+static inline void stream_write(hls::stream<uint32> &stream, uint32 data) {
 #pragma HLS inline
 	while (!stream.write_nb(data)){}
 }
@@ -53,7 +53,7 @@ inline void stream_write(hls::stream<uint32> &stream, uint32 data) {
  *
  *   @returns read data
  */
-inline uint32 stream_read(hls::stream<uint32> &stream) {
+static inline uint32 stream_read(hls::stream<uint32> &stream) {
 #pragma HLS inline
 	uint32 data;
 	while (!stream.read_nb(data)){}
@@ -179,6 +179,58 @@ inline uint32 stream_read(hls::stream<uint32> &stream) {
 	stream_write(osif_hw2sw, data),\
 	stream_read(osif_sw2hw),\
 	stream_read(osif_sw2hw))
+
+/*
+ * Writes data to the pipe. Len represents bytes, not words.
+ */
+#define PIPE_WRITE(res,data,len)\
+	_PIPE_WRITE(osif_hw2sw, osif_sw2hw, __run_id, res, data, len)
+
+static inline int _PIPE_WRITE(hls::stream<uint32> &osif_hw2sw,
+                              hls::stream<uint32> &osif_sw2hw,
+                              uint8 run_id,
+                              uint8 res, uint32 *data, int len) {
+	#pragma HLS inline
+
+	stream_write(osif_hw2sw, CONCAT_CTRL(run_id, res, 0x0002));
+	stream_write(osif_hw2sw, OSIF_CMD_PIPE_WRITE);
+	stream_write(osif_hw2sw, len);
+
+	stream_read(osif_sw2hw);
+	uint16 min_len = apint_get_range(stream_read(osif_sw2hw), 17, 2);
+	stream_write(osif_hw2sw, CONCAT_CTRL(run_id, res, min_len));
+	for (int i = 0; i < min_len; i++) {
+		stream_write(osif_hw2sw, data[i]);
+	}
+
+	return len << 2;
+}
+
+/*
+ * Reads data from the pipe.
+ */
+#define PIPE_READ(res,data,len)\
+	_PIPE_READ(osif_hw2sw, osif_sw2hw, __run_id, res, data, len)
+
+static inline int _PIPE_READ(hls::stream<uint32> &osif_hw2sw,
+                             hls::stream<uint32> &osif_sw2hw,
+                             uint8 run_id,
+                             uint8 res, uint32 *data, int len) {
+	#pragma HLS inline
+
+	stream_write(osif_hw2sw, CONCAT_CTRL(run_id, res, 0x0002));
+	stream_write(osif_hw2sw, OSIF_CMD_PIPE_READ);
+	stream_write(osif_hw2sw, len);
+
+	stream_read(osif_sw2hw);
+	uint16 min_len = apint_get_range(stream_read(osif_sw2hw), 17, 2);
+	stream_read(osif_sw2hw);
+	for (int i = 0; i < min_len; i++) {
+		data[i] = stream_read(osif_sw2hw);
+	}
+
+	return len << 2;
+}
 
 /*
  * Gets the pointer to the initialization data of the ReconOS thread

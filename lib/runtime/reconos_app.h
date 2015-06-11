@@ -39,6 +39,7 @@
  *   sem   - semaphore (sem_t)
  *   mutex - mutex (pthread_mutex)
  *   cond  - condition variable (pthread_cond)
+ *   pipe  - pipe (struct pipe)
  */
 <<generate for RESOURCES(Type == "mbox" and Mode == "sw")>>
 extern struct mbox <<NameLower>>_s;

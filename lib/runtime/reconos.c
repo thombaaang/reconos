@@ -25,6 +25,7 @@
 #include "private.h"
 #include "arch/arch.h"
 #include "comp/mbox.h"
+#include "comp/pipe.h"
 
 #include <unistd.h>
 #include <signal.h>
@@ -153,7 +154,7 @@ void reconos_thread_setswentry(struct reconos_thread *rt,
  * @see header
  */
 void reconos_thread_create(struct reconos_thread *rt, int mode) {
-	if (!rt->state == RECONOS_THREAD_STATE_INIT) {
+	if (rt->state != RECONOS_THREAD_STATE_INIT) {
 		panic("[reconos-core] ERROR: thread was already created");
 	}
 
@@ -1065,22 +1066,57 @@ void *dt_delegate(void *arg) {
 		}
 
 		switch (recv[1] & OSIF_CMD_MASK) {
-			case OSIF_CMD_MBOX_GET:
+			case OSIF_CMD_MBOX_GET: {
 				RESOURCE_CHECK_TYPE(res, RECONOS_RESOURCE_TYPE_MBOX);
 				send_count = 1;
+				send[0] = RECONOS_OSIF_CTRL(0xFF, slot->id, send_count);
 				send[1] = mbox_get(res->ptr);
+				reconos_osif_write(slot->osif, send, (send_count + 1) * sizeof(uint32_t));
 				debug("[reconos-rt-%d] "
 				      "DEBUG: executed mbox_get on 0x%02x", slot->id, res_id, send[1]);
 				break;
+			}
 
-			case OSIF_CMD_MBOX_PUT:
+			case OSIF_CMD_MBOX_PUT: {
 				RESOURCE_CHECK_TYPE(res, RECONOS_RESOURCE_TYPE_MBOX);
 				debug("[reconos-rt-%d] "
 				      "DEBUG: executing mbox_put on 0x%02x", slot->id, res_id);
 				mbox_put(res->ptr, recv[2]);
 				send_count = 1;
+				send[0] = RECONOS_OSIF_CTRL(0xFF, slot->id, send_count);
 				send[1] = 0x00000000;
+				reconos_osif_write(slot->osif, send, (send_count + 1) * sizeof(uint32_t));
 				break;
+			}
+
+			case OSIF_CMD_PIPE_WRITE: {
+				RESOURCE_CHECK_TYPE(res, RECONOS_RESOURCE_TYPE_PIPE);
+				debug("[reconos-rt-%d] "
+				      "DEBUG: executing pipe_write on 0x%02x", slot->id, res_id);
+				uint32_t len = pipe_writereq(res->ptr, recv[2]);
+				send_count = 1;
+				send[0] = RECONOS_OSIF_CTRL(0xFF, slot->id, send_count);
+				send[1] = len;
+				reconos_osif_write(slot->osif, send, (send_count + 1) * sizeof(uint32_t));
+				reconos_osif_read(slot->osif, recv, 128 * sizeof(uint32_t));
+				pipe_writeareq(res->ptr, (void *)(recv + 1));
+				break;
+			}
+
+			case OSIF_CMD_PIPE_READ: {
+				RESOURCE_CHECK_TYPE(res, RECONOS_RESOURCE_TYPE_PIPE);
+				debug("[reconos-rt-%d] "
+				      "DEBUG: executed pipe_read on 0x%02x", slot->id, res_id);
+				uint32_t len = pipe_read(res->ptr, (void *)(send + 1), recv[2]);
+				send_count = 1;
+				send[0] = RECONOS_OSIF_CTRL(0xFF, slot->id, send_count);
+				send[1] = len;
+				reconos_osif_write(slot->osif, send, (send_count + 1) * sizeof(uint32_t));
+				send_count = len;
+				send[0] = RECONOS_OSIF_CTRL(0xFF, slot->id, send_count);
+				reconos_osif_write(slot->osif, send, (send_count + 1) * sizeof(uint32_t));
+				break;
+			}
 
 			default:
 				panic("[reconos-rt-%d] "
@@ -1088,9 +1124,9 @@ void *dt_delegate(void *arg) {
 				break;
 		}
 
-		if (send_count > 0)
-		send[0] = 0xFF000000 | (slot->id << 16) | send_count;
-		reconos_osif_write(slot->osif, send, (send_count + 1) * sizeof(uint32_t));
+		if (send_count > 0) {
+			
+		}
 
 #if 0
 		switch (cmd & OSIF_CMD_MASK) {

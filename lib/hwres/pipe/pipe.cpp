@@ -6,7 +6,7 @@
 void hwres_imp(hls::stream<ap_uint<32> > osif_in, hls::stream<ap_uint<32> > osif_out) {
 	#pragma HLS INTERFACE ap_ctrl_none port=return
 
-	bool write_req, read_req;
+	bool write_req = false, read_req = false;
 	ap_uint<24> write_len, read_len;
 	ap_uint<8> write_id, read_id;
 
@@ -33,10 +33,19 @@ void hwres_imp(hls::stream<ap_uint<32> > osif_in, hls::stream<ap_uint<32> > osif
 			ap_uint<24> min_len = write_len < read_len ? write_len : read_len;
 
 			osif_out.write((ap_uint<8>(<<ID|0x{:02x}>>), read_id, ap_uint<16>(0x0001)));
-			osif_out.write(write_id, min_len));
+			osif_out.write((write_id, min_len));
 
 			osif_out.write((ap_uint<8>(<<ID|0x{:02x}>>), write_id, ap_uint<16>(0x0001)));
-			osif_out.write(read_id, min_len));
+			osif_out.write((read_id, min_len));
+
+			osif_in.read();
+			osif_out.write((ap_uint<8>(<<ID|0x{:02x}>>), read_id, min_len(17, 2)));
+			for (int i = 0; i < min_len / 4; i++) {
+				osif_out.write(osif_in.read());
+			}
+
+			write_req = false;
+			read_req = false;
 		}
 	}
 }

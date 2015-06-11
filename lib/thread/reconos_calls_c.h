@@ -171,11 +171,10 @@ static inline int _PIPE_WRITE(struct reconos_resource *res,
 		msg[1] = OSIF_CMD_PIPE_WRITE;
 		msg[2] = count;
 		reconos_thread_swslot_write(rt, msg, 3);
-		reconos_thread_swslot_read(rt, msg, 3);
 
-		int dst = (msg[1] & 0xFF000000) >> 24;
+		reconos_thread_swslot_read(rt, msg, 3);
 		int len = msg[1] & 0x00FFFFFF;
-		msg[0] = RECONOS_OSIF_CTRL(run_id, dst, len / sizeof(uint32_t));
+		msg[0] = RECONOS_OSIF_CTRL(run_id, res->id, len / sizeof(uint32_t));
 		reconos_thread_swslot_write(rt, msg, 1);
 		reconos_thread_swslot_write(rt, (uint32_t *)data, len / sizeof(uint32_t));
 
@@ -203,8 +202,8 @@ static inline int _PIPE_READ(struct reconos_resource *res,
 		msg[1] = OSIF_CMD_PIPE_READ;
 		msg[2] = count;
 		reconos_thread_swslot_write(rt, msg, 3);
+		
 		reconos_thread_swslot_read(rt, msg, 3);
-
 		int len = msg[1] & 0x00FFFFFF;
 		uint32_t buf[len / sizeof(uint32_t) + 1];
 		reconos_thread_swslot_read(rt, buf, len / sizeof(uint32_t) + 1);
