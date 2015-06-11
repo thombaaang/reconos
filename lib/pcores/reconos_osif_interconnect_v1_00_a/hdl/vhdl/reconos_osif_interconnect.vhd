@@ -104,23 +104,18 @@ architecture imp of reconos_osif_interconnect is
 	--
 	-- Internal interconnect signals
 	--
-	--   hw<<SlotId>>2res<<ResId>>_/res<<ResId>>2hw<<SlotId>>_ - interconnect from slots to resources
-	--   sw2hw<<SlotId>>_/hw<<SlotId>>2sw_                     - interconnect from slots to software
-	--   sw2res<<ResId>>_/res<<ResId>>2sw_                     - interconnect for software to resources
+	--   ics<<_i>>_ - configurable interconnects
 	--
-	--   dt2sw_out_empty - internal signal to support has data for software
+	--   sw2hw<<SlotId>>_/hw<<SlotId>>2sw - interconnect between slots and software
+	--   sw2hw<<ResId>>_/res<<ResId>>2sw  - interconnect between slots and software
 	--
+	<<generate for NUM_ICS>>
+	signal ics<<_i>>_data   : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
+	signal ics<<_i>>_empty  : std_logic;
+	signal ics<<_i>>_re     : std_logic;
+	<<end generate>>
+
 	<<generate for SLOTS>>
-	<<=generate for IcRes=>>
-	signal hw<<SlotId>>2res<<ResId>>_data  : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
-	signal hw<<SlotId>>2res<<ResId>>_empty : std_logic;
-	signal hw<<SlotId>>2res<<ResId>>_re    : std_logic;
-
-	signal res<<ResId>>2hw<<SlotId>>_data  : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
-	signal res<<ResId>>2hw<<SlotId>>_empty : std_logic;
-	signal res<<ResId>>2hw<<SlotId>>_re    : std_logic;
-	<<=end generate=>>
-
 	signal sw2hw<<SlotId>>_data  : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 	signal sw2hw<<SlotId>>_empty : std_logic;
 	signal sw2hw<<SlotId>>_re    : std_logic;
@@ -382,10 +377,10 @@ begin
 			FIFO_In_Empty => fifoin_slot<<SlotId>>_empty,
 			FIFO_In_RE    => fifoin_slot<<SlotId>>_re,
 
-			<<=generate for IcRes=>>
-			FIFO_Res<<ResId>>_Data  => hw<<SlotId>>2res<<ResId>>_data,
-			FIFO_Res<<ResId>>_Empty => hw<<SlotId>>2res<<ResId>>_empty,
-			FIFO_Res<<ResId>>_RE    => hw<<SlotId>>2res<<ResId>>_re,
+			<<=generate for Ics(Type == "router")=>>
+			FIFO_Ics<<Id>>_Data  => ics<<Id>>_data,
+			FIFO_Ics<<Id>>_Empty => ics<<Id>>_empty,
+			FIFO_Ics<<Id>>_RE    => ics<<Id>>_re,
 			<<=end generate=>>
 			FIFO_Sw_Data            => hw<<SlotId>>2sw_data,
 			FIFO_Sw_Empty           => hw<<SlotId>>2sw_empty,
@@ -404,10 +399,10 @@ begin
 			FIFO_Out_Empty => ic2hw_<<SlotId>>_empty,
 			FIFO_Out_RE    => ic2hw_<<SlotId>>_re,
 
-			<<=generate for IcRes=>>
-			FIFO_Res<<ResId>>_Data  => res<<ResId>>2hw<<SlotId>>_data,
-			FIFO_Res<<ResId>>_Empty => res<<ResId>>2hw<<SlotId>>_empty,
-			FIFO_Res<<ResId>>_RE    => res<<ResId>>2hw<<SlotId>>_re,
+			<<=generate for Ics(Type == "arbiter")=>>
+			FIFO_Ics<<Id>>_Data  => ics<<Id>>_data,
+			FIFO_Ics<<Id>>_Empty => ics<<Id>>_empty,
+			FIFO_Ics<<Id>>_RE    => ics<<Id>>_re,
 			<<=end generate=>>
 			FIFO_Sw_Data            => sw2hw<<SlotId>>_data,
 			FIFO_Sw_Empty           => sw2hw<<SlotId>>_empty,
@@ -428,10 +423,10 @@ begin
 			FIFO_In_Empty => fifoin_res<<ResId>>_empty,
 			FIFO_In_RE    => fifoin_res<<ResId>>_re,
 
-			<<=generate for IcSlots=>>
-			FIFO_Hw<<SlotId>>_Data  => res<<ResId>>2hw<<SlotId>>_data,
-			FIFO_Hw<<SlotId>>_Empty => res<<ResId>>2hw<<SlotId>>_empty,
-			FIFO_Hw<<SlotId>>_RE    => res<<ResId>>2hw<<SlotId>>_re,
+			<<=generate for Ics(Type == "router")=>>
+			FIFO_Ics<<Id>>_Data  => ics<<Id>>_data,
+			FIFO_Ics<<Id>>_Empty => ics<<Id>>_empty,
+			FIFO_Ics<<Id>>_RE    => ics<<Id>>_re,
 			<<=end generate=>>
 			FIFO_Sw_Data            => res<<ResId>>2sw_data,
 			FIFO_Sw_Empty           => res<<ResId>>2sw_empty,
@@ -450,10 +445,10 @@ begin
 			FIFO_Out_Empty => ic2res_<<ResId>>_empty,
 			FIFO_Out_RE    => ic2res_<<ResId>>_re,
 
-			<<=generate for IcSlots=>>
-			FIFO_Hw<<SlotId>>_Data  => hw<<SlotId>>2res<<ResId>>_data,
-			FIFO_Hw<<SlotId>>_Empty => hw<<SlotId>>2res<<ResId>>_empty,
-			FIFO_Hw<<SlotId>>_RE    => hw<<SlotId>>2res<<ResId>>_re,
+			<<=generate for Ics(Type == "arbiter")=>>
+			FIFO_Ics<<Id>>_Data  => ics<<Id>>_data,
+			FIFO_Ics<<Id>>_Empty => ics<<Id>>_empty,
+			FIFO_Ics<<Id>>_RE    => ics<<Id>>_re,
 			<<=end generate=>>
 			FIFO_Sw_Data            => sw2res<<ResId>>_data,
 			FIFO_Sw_Empty           => sw2res<<ResId>>_empty,

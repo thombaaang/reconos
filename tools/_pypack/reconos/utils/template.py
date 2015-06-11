@@ -35,7 +35,6 @@ def _gen_preproc(scope):
 
 		if type(value) is int:
 			value = [{} for _ in range(value)]
-			print("Generating for int: " + str(value))
 
 		if type(value) is not list:
 			return m.string[m.start():m.end()]

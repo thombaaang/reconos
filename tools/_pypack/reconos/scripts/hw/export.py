@@ -75,8 +75,13 @@ def _export_hw_ise(prj, hwdir, link):
 			d["HwtCoreName"] = s.threads[0].get_corename()
 			d["HwtCoreVersion"] = s.threads[0].get_coreversion()
 			d["Id"] = s.id
+			d["SlotId"] = s.id
+			d["Name"] = s.name.lower()
 			d["Clk"] = s.clock.id
 			d["Async"] = "sync" if s.clock == prj.clock else "async"
+			d["Ics"] = []
+			d["NumIcs"] = 0
+			d["HasIcs"] = False
 			dictionary["SLOTS"].append(d)
 	dictionary["CLOCKS"] = []
 	for c in prj.clocks:
@@ -93,25 +98,33 @@ def _export_hw_ise(prj, hwdir, link):
 		d = {}
 		d["_e"] = r
 		d["Id"] = r.id
+		d["ResId"] = r.id
 		d["Name"] = r.name.lower()
 		d["Mode"] = r.mode
+		d["Ics"] = []
+		d["NumIcs"] = 0
+		d["HasIcs"] = False
 		dictionary["RESOURCES"].append(d)
 
-	for d in dictionary["SLOTS"]:
-		s = d["_e"]
-		d["SlotId"] = s.id
-		resources = [_ for _ in s.acc_resources() if _.mode == "hw"]
-		resources = [_ for _ in dictionary["RESOURCES"] if _["_e"] in resources]
-		d["IcRes"] = resources
-		d["NumIcRes"] = len(resources)
-		d["HasIcRes"] = len(resources) != 0;
+	num_ics = 0;
 
-	for d in dictionary["RESOURCES"]:
-		r = d["_e"]
-		d["ResId"] = r.id
-		slots = [_ for _ in dictionary["SLOTS"] if r in _["_e"].acc_resources()]
-		d["IcSlots"] = slots
-		d["NumIcSlots"] = len(slots)
+	# interconnect between resources and threads
+	ics = []
+	for s in prj.slots:
+		sd = [_ for _ in dictionary["SLOTS"] if _["_e"] == s][0]
+		for r in [_ for _ in s.acc_resources() if _.mode == "hw"]:
+			rd = [_ for _ in dictionary["RESOURCES"] if _["_e"] == r][0]
+			sd["Ics"].append({"Id": num_ics, "Type": "arbiter"})
+			sd["Ics"].append({"Id": num_ics + 1, "DstId": r.id, "Type": "router"})
+			sd["HasIcs"] = True
+			sd["NumIcs"] = len(sd["Ics"]) // 2
+			rd["Ics"].append({"Id": num_ics + 1, "Type": "arbiter"})
+			rd["Ics"].append({"Id": num_ics, "DstId": s.id, "Type": "router"})
+			rd["HasIcs"] = True
+			rd["NumIcs"] = len(rd["Ics"]) // 2
+			num_ics += 2
+
+	dictionary["NUM_ICS"] = num_ics;
 
 	log.info("Generating export files ...")
 	tmpl = "ref_" + prj.impinfo.os + "_" + "_".join(prj.impinfo.board) + "_" + prj.impinfo.design + "_" + prj.impinfo.xil[1]

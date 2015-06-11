@@ -39,8 +39,8 @@ entity arbiter_icout_res<<Id>> is
 	--
 	--   FIFO_Out_ - fifo signal outputs
 	--
-	--   FIFO_Hw<<SlotId>>_ - fifo signal inputs from slots
-	--   FIFO_Sw_           - fifo signal inputs from software
+	--   FIFO_Ics<<Id>>_  - fifo signal inputs from slots
+	--   FIFO_Sw_         - fifo signal inputs from software
 	--   
 	--   SYS_Clk - system clock
 	--   SYS_Rst - system reset
@@ -50,10 +50,10 @@ entity arbiter_icout_res<<Id>> is
 		FIFO_Out_Empty : out std_logic;
 		FIFO_Out_RE    : in  std_logic;
 
-		<<=generate for IcSlots=>>
-		FIFO_Hw<<SlotId>>_Data  : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
-		FIFO_Hw<<SlotId>>_Empty : in  std_logic;
-		FIFO_Hw<<SlotId>>_RE    : out std_logic;
+		<<=generate for Ics(Type == "arbiter")=>>
+		FIFO_Ics<<Id>>_Data  : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
+		FIFO_Ics<<Id>>_Empty : in  std_logic;
+		FIFO_Ics<<Id>>_RE    : out std_logic;
 		<<=end generate=>>
 		FIFO_Sw_Data  : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		FIFO_Sw_Empty : in  std_logic;
@@ -89,17 +89,17 @@ architecture imp of arbiter_icout_res<<Id>> is
 	--   msk_  - mask to disable previous grants
 	--   grnt_ - grant vector to multiplex signals
 	--
-	signal req  : std_logic_vector(<<NumIcSlots>> + 1 - 1 downto 0) := (others => '0');
-	signal msk  : std_logic_vector(<<NumIcSlots>> + 1 - 1 downto 0) := (others => '1');
-	signal msb  : std_logic_vector(<<NumIcSlots>> + 1 - 1 downto 0) := (others => '0');
-	signal grnt : std_logic_vector(<<NumIcSlots>> + 1 - 1 downto 0) := (others => '0');
+	signal req  : std_logic_vector(<<NumIcs>> + 1 - 1 downto 0) := (others => '0');
+	signal msk  : std_logic_vector(<<NumIcs>> + 1 - 1 downto 0) := (others => '1');
+	signal msb  : std_logic_vector(<<NumIcs>> + 1 - 1 downto 0) := (others => '0');
+	signal grnt : std_logic_vector(<<NumIcs>> + 1 - 1 downto 0) := (others => '0');
 	signal orr  : std_logic := '1';
 
-	signal req_hw  : std_logic_vector(<<NumIcSlots>> - 1 downto 0) := (others => '0');
+	signal req_hw  : std_logic_vector(<<NumIcs>> - 1 downto 0) := (others => '0');
 	signal req_sw  : std_logic := '0';
-	signal msk_hw  : std_logic_vector(<<NumIcSlots>> - 1 downto 0) := (others => '1');
+	signal msk_hw  : std_logic_vector(<<NumIcs>> - 1 downto 0) := (others => '1');
 	signal msk_sw  : std_logic := '1';
-	signal grnt_hw : std_logic_vector(<<NumIcSlots>> - 1 downto 0) := (others => '0');
+	signal grnt_hw : std_logic_vector(<<NumIcs>> - 1 downto 0) := (others => '0');
 	signal grnt_sw : std_logic := '0';
 
 	--
@@ -120,16 +120,16 @@ begin
 
 	-- == Assignment of input signals =====================================
 
-	<<=generate for IcSlots=>>
-	req_hw(<<_i>>) <= not FIFO_Hw<<SlotId>>_Empty and msk_hw(<<_i>>);
+	<<=generate for Ics(Type == "arbiter")=>>
+	req_hw(<<_i>>) <= not FIFO_Ics<<Id>>_Empty and msk_hw(<<_i>>);
 	<<=end generate=>>
 	req_sw <= not FIFO_Sw_Empty and msk_sw;
 
 	req <= req_hw & req_sw;
 
-	msk_hw  <= msk(<<NumIcSlots>> + 1 - 1 downto 1);
+	msk_hw  <= msk(<<NumIcs>> + 1 - 1 downto 1);
 	msk_sw  <= msk(0);
-	grnt_hw <= grnt(<<NumIcSlots>> + 1 - 1 downto 1);
+	grnt_hw <= grnt(<<NumIcs>> + 1 - 1 downto 1);
 	grnt_sw <= grnt(0);
 
 	msb <= req and std_logic_vector(unsigned(not(req)) + 1);
@@ -196,23 +196,23 @@ begin
 	       '0';
 
 	out_data <=
-	  <<=generate for IcSlots=>>
-	  (FIFO_Hw<<SlotId>>_Data and (FIFO_Hw<<SlotId>>_Data'Range => grnt_hw(<<_i>>))) or
+	  <<=generate for Ics(Type == "arbiter")=>>
+	  (FIFO_Ics<<Id>>_Data and (FIFO_Ics<<Id>>_Data'Range => grnt_hw(<<_i>>))) or
 	  <<=end generate=>>
 	  (FIFO_Sw_Data and (FIFO_Sw_Data'Range => grnt_sw)) or
 	  (C_OSIF_DATA_WIDTH - 1 downto 0 => '0');
 
 	out_empty <=
-	  <<=generate for IcSlots=>>
-	  (FIFO_Hw<<SlotId>>_Empty and grnt_hw(<<_i>>)) or
+	  <<=generate for Ics(Type == "arbiter")=>>
+	  (FIFO_Ics<<Id>>_Empty and grnt_hw(<<_i>>)) or
 	  <<=end generate=>>
 	  (FIFO_Sw_Empty and grnt_sw) or
 	  orr;
 
 	FIFO_Out_Data  <= out_data;
 	FIFO_Out_Empty <= out_empty;
-	<<=generate for IcSlots=>>
-	FIFO_Hw<<SlotId>>_RE <= FIFO_Out_RE and grnt_hw(<<_i>>);
+	<<=generate for Ics(Type == "arbiter")=>>
+	FIFO_Ics<<Id>>_RE <= FIFO_Out_RE and grnt_hw(<<_i>>);
 	<<=end generate=>>
 	FIFO_Sw_RE <= FIFO_Out_RE and grnt_sw;
 

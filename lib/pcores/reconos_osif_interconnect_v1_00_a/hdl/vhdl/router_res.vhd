@@ -39,8 +39,8 @@ entity router_icin_res<<Id>> is
 	--
 	--   FIFO_In_ - fifo signal inputs
 	--
-	--   FIFO_Hw<<SlotId>>_ - fifo signal outputs for slots
-	--   FIFO_Sw_           - fifo signal outputs for software
+	--   FIFO_Ics<<Id>>_ - fifo signal outputs for slots
+	--   FIFO_Sw_        - fifo signal outputs for software
 	--   
 	--   SYS_Clk - system clock
 	--   SYS_Rst - system reset
@@ -50,10 +50,10 @@ entity router_icin_res<<Id>> is
 		FIFO_In_Empty : in  std_logic;
 		FIFO_In_RE    : out std_logic;
 
-		<<=generate for IcSlots=>>
-		FIFO_Hw<<SlotId>>_Data  : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
-		FIFO_Hw<<SlotId>>_Empty : out std_logic;
-		FIFO_Hw<<SlotId>>_RE    : in  std_logic;
+		<<=generate for Ics(Type == "router")=>>
+		FIFO_Ics<<Id>>_Data  : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
+		FIFO_Ics<<Id>>_Empty : out std_logic;
+		FIFO_Ics<<Id>>_RE    : in  std_logic;
 		<<=end generate=>>
 		FIFO_Sw_Data  : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		FIFO_Sw_Empty : out std_logic;
@@ -81,7 +81,7 @@ architecture imp of router_icin_res<<Id>> is
 	--
 	--   grnt_ - grant vector to multiplex signals
 	--
-	signal grnt_hw : std_logic_vector(<<NumIcSlots>> - 1 downto 0) := (others => '0');
+	signal grnt_hw : std_logic_vector(<<NumIcs>> - 1 downto 0) := (others => '0');
 	signal grnt_sw : std_logic := '0';
 
 	--
@@ -131,8 +131,8 @@ begin
 					end if;
 
 				when STATE_ROUTE_0 =>
-					<<=generate for IcSlots=>>
-					if ctrl(C_OSIF_DST_RANGE) = <<SlotId|x"{:02x}">> then
+					<<=generate for Ics(Type == "router")=>>
+					if ctrl(C_OSIF_DST_RANGE) = <<DstId|x"{:02x}">> then
 						grnt_hw(<<_i>>) <= '1';
 					end if;
 					<<=end generate=>>
@@ -172,8 +172,8 @@ begin
 	-- == Multiplexing signals ============================================
 
 	in_re <=
-	  <<=generate for IcSlots=>>
-	  ((FIFO_Hw<<SlotId>>_RE) and grnt_hw(<<_i>>)) or
+	  <<=generate for Ics(Type == "router")=>>
+	  ((FIFO_Ics<<Id>>_RE) and grnt_hw(<<_i>>)) or
 	  <<=end generate=>>
 	  ((FIFO_Sw_RE) and grnt_sw);
 
@@ -185,13 +185,13 @@ begin
 	             '0'           when state = STATE_WRITE_CTRL else
 	             '1';
 
-	<<=generate for IcSlots=>>
-	FIFO_Hw<<SlotId>>_Data <= out_data;
+	<<=generate for Ics(Type == "router")=>>
+	FIFO_Ics<<Id>>_Data <= out_data;
 	<<=end generate=>>
 	FIFO_Sw_Data <= out_data;
 
-	<<=generate for IcSlots=>>
-	FIFO_Hw<<SlotId>>_Empty <= out_empty when grnt_hw(<<_i>>) = '1' else '1';
+	<<=generate for Ics(Type == "router")=>>
+	FIFO_Ics<<Id>>_Empty <= out_empty when grnt_hw(<<_i>>) = '1' else '1';
 	<<=end generate=>>
 	FIFO_Sw_Empty <= out_empty when grnt_sw = '1' else '1';
 
