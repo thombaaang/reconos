@@ -33,7 +33,8 @@ def export_hw_cmd(args):
 	if args.thread is not None:
 		export_hw_thread(args, args.hwdir, args.link, args.thread)
 	elif args.resource is not None:
-		export_hw_res(args, args.hwdir, args.resource)
+		resource = args.resource.split("_")
+		export_hw_res(args, args.hwdir, resource[0], resource[1])
 	else:
 		export_hw(args, args.hwdir, args.link)
 
@@ -49,9 +50,9 @@ def export_hw_thread(args, hwdir, link, thread):
 	else:
 		log.error("Xilinx tool not supported")
 
-def export_hw_res(args, hwdir, resource):
+def export_hw_res(args, hwdir, resource, group):
 	if args.prj.impinfo.xil[0] == "ise":
-		_export_hw_res_ise(args.prj, hwdir, resource)
+		_export_hw_res_ise(args.prj, hwdir, resource, group)
 	else:
 		log.error("Xilinx tool not supported")
 
@@ -136,14 +137,14 @@ def _export_hw_ise(prj, hwdir, link):
 
 	log.info("Generating resources ...")
 	for r in [_ for _ in prj.resources if _.mode == "hw"]:
-		_export_hw_res_ise(prj, shutil2.join(hwdir, "pcores"), r.name)
+		_export_hw_res_ise(prj, shutil2.join(hwdir, "pcores"), r.name, r.group)
 
-def _export_hw_res_ise(prj, hwdir, resource):
+def _export_hw_res_ise(prj, hwdir, resource, group):
 	hwdir = hwdir if hwdir is not None else prj.basedir + ".hw." + resource.lower()
 
 	log.info("Exporting resource " + resource + " to directory '" + hwdir + "'")
 
-	resources = [_ for _ in prj.resources if _.name == resource]
+	resources = [_ for _ in prj.resources if _.name == resource and _.group == group]
 	if (len(resources) == 1):
 		resource = resources[0]
 
@@ -261,25 +262,21 @@ def _export_hw_thread_ise(prj, hwdir, link, thread):
 
 		log.info("Starting Vivado HLS ...")
 		if "bbd" in thread.hwoptions:
-			if "vivado" in thread.hwoptions:
-				subprocess.call("""
-				  source /opt/Xilinx/Vivado/2014.4/settings64.sh;
-				  cd {0};
-				  vivado_hls -f script_csynth.tcl;
-				  vivado -mode batch -source script_vivado_edn.tcl;""".format(tmp.name),
-				  shell=True)
+			subprocess.call("""
+			  source /opt/Xilinx/14.7/ISE_DS/settings64.sh;
+			  source /opt/Xilinx/Vivado/2014.4/settings64.sh;
+			  cd {0};
+			  vivado_hls -f script_export.tcl;""".format(tmp.name),
+			  shell=True)
 
-				dictionary = {}
-				dictionary["NAME"] = thread.name.lower()
-				dictionary["MEM"] = thread.mem
-				dictionary["MEM_N"] = not thread.mem
-				srcs = shutil2.join(tmp.name, "rt_imp.edn")
-				dictionary["SOURCES"] = [srcs]
-				incls = ["rt_imp.edn"]
-				dictionary["INCLUDES"] = [{"File": _} for _ in incls]
-			else:
-				log.error("No bbd tool found")
-				return
+			dictionary = {}
+			dictionary["NAME"] = thread.name.lower()
+			dictionary["MEM"] = thread.mem
+			dictionary["MEM_N"] = not thread.mem
+			srcs = shutil2.join(tmp.name, "hls", "sol", "impl", "vhdl")
+			dictionary["SOURCES"] = shutil2.listfiles(srcs, True, "ngc", False)
+			incls = shutil2.listfiles(srcs, True, "ngc")
+			dictionary["INCLUDES"] = [{"File": _} for _ in incls]
 
 			log.info("Generating export files ...")
 			prj.apply_template("thread_hls_pcore_bbd", dictionary, hwdir)
@@ -297,7 +294,7 @@ def _export_hw_thread_ise(prj, hwdir, link, thread):
 			dictionary["MEM_N"] = not thread.mem
 			srcs = shutil2.join(tmp.name, "hls", "sol", "syn", "vhdl")
 			dictionary["SOURCES"] = [srcs]
-			incls = shutil2.listfiles(srcs, True)
+			incls = shutil2.listfiles(srcs, True, "vhd")
 			dictionary["INCLUDES"] = [{"File": shutil2.trimext(_)} for _ in incls]
 
 			log.info("Generating export files ...")
