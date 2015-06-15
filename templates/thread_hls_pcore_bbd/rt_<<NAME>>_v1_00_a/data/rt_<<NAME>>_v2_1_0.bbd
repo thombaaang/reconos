@@ -1,5 +1,3 @@
 <<reconos_preproc>>
 FILES
-<<generate for INCLUDES>>
-<<File>>
-<<end generate>>
+<<generate for INCLUDES>><<File>><<c,>> <<end generate>>
