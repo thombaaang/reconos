@@ -1,3 +1,5 @@
+#include "ppm.h"
+
 #include "reconos.h"
 #include "reconos_app.h"
 #include "mbox.h"
@@ -6,27 +8,43 @@
 
 #include <stdio.h>
 
-#define EVAL_WRITE 0x00000000
-#define EVAL_READ  0x00000001
-
 int main(int argc, char **argv) {
-	printf("Hello World\n");
+	int i;
+	struct ppm img;
+	struct ppm img2;
+
+	if (argc != 2) {
+		printf("ERROR: First argument must be filname of image\n");
+		return -1;
+	}
 
 	reconos_init();
 	reconos_app_init();
-	//timer_init();
 
-	reconos_thread_create_swt_eval();
-	reconos_thread_create_hwt_eval();
+	reconos_thread_create_hwt_read();
+	reconos_thread_create_hwt_write();
+	reconos_thread_create_hwt_brighten();
+	reconos_thread_create_hwt_mirror();
 
-	while(1) {
-		mbox_put(eval_cmd_ptr, EVAL_WRITE);
-		mbox_put(eval_cmd_ptr, EVAL_READ);
-	}
+	ppm_init_empty(&img);
+	ppm_read(&img, argv[1]);
+
+	mbox_put(read_cmd_ptr, (uint32_t)img.data);
+	mbox_put(read_cmd_ptr, img.height);
+
+	ppm_init(&img2, img.width, img.height);
+	for (i = 0; i < img2.count; i++)
+		img2.data[i] = 0xFF000000;
+
+	mbox_put(write_cmd_ptr, (uint32_t)img2.data);
+	mbox_put(write_cmd_ptr, img2.height);
+
+	mbox_get(write_cmd_ptr);
+
+	ppm_write(&img2, "evalpipe_out.ppm");
 
 	reconos_app_cleanup();
 	reconos_cleanup();
-	//timer_cleanup();
-	
+
 	return 0;
 }
