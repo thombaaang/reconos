@@ -1019,12 +1019,20 @@ intr:
 			      "ERROR: resource 0x%02x of wrong type", slot->id, res_id);\
 	}
 
+
+#define BUF_SIZE_WORDS  256
+#define BUF_SIZE_BYTES  (BUF_SIZE_WORDS * sizeof(uint32_t))
+#define RECV_SIZE_WORDS 16
+#define RECV_SIZE_BYTES (RECV_SIZE_WORDS * sizeof(uint32_t))
+#define SEND_SIZE_WORDS 16
+#define SEND_SIZE_BYTES (SEND_SIZE_WORDS * sizeof(uint32_t))
 /*
  * @see header
  */
 void *dt_delegate(void *arg) {
 	struct hwslot *slot;
-	uint32_t recv[128], send[128];
+	uint32_t recv[RECV_SIZE_WORDS], send[SEND_SIZE_WORDS];
+	uint32_t buf[BUF_SIZE_WORDS];
 	size_t send_count;
 
 	int i;
@@ -1051,7 +1059,7 @@ void *dt_delegate(void *arg) {
 		debug("[reconos-dt-%d] received command 0x%x\n", slot->id, cmd);
 #endif 
 
-		reconos_osif_read(slot->osif, recv, 128 * sizeof(uint32_t));
+		reconos_osif_read(slot->osif, recv, RECV_SIZE_BYTES);
 
 		res_id = RECONOS_OSIF_DST(recv[0]);
 		for (i = 0; i < slot->rt->resource_count; i++) {
@@ -1073,14 +1081,14 @@ void *dt_delegate(void *arg) {
 				send[1] = mbox_get(res->ptr);
 				reconos_osif_write(slot->osif, send, (send_count + 1) * sizeof(uint32_t));
 				debug("[reconos-rt-%d] "
-				      "DEBUG: executed mbox_get on 0x%02x", slot->id, res_id, send[1]);
+				      "DEBUG: executed mbox_get on 0x%02x (0x%08x)", slot->id, res_id, send[1]);
 				break;
 			}
 
 			case OSIF_CMD_MBOX_PUT: {
 				RESOURCE_CHECK_TYPE(res, RECONOS_RESOURCE_TYPE_MBOX);
 				debug("[reconos-rt-%d] "
-				      "DEBUG: executing mbox_put on 0x%02x", slot->id, res_id);
+				      "DEBUG: executing mbox_put on 0x%02x (0x%08x)", slot->id, res_id, recv[2]);
 				mbox_put(res->ptr, recv[2]);
 				send_count = 1;
 				send[0] = RECONOS_OSIF_CTRL(0xFF, slot->id, send_count);
@@ -1092,29 +1100,31 @@ void *dt_delegate(void *arg) {
 			case OSIF_CMD_PIPE_WRITE: {
 				RESOURCE_CHECK_TYPE(res, RECONOS_RESOURCE_TYPE_PIPE);
 				debug("[reconos-rt-%d] "
-				      "DEBUG: executing pipe_write on 0x%02x", slot->id, res_id);
+				      "DEBUG: executing pipe_write on 0x%02x (0x%06x)", slot->id, res_id, recv[2]);
 				uint32_t len = pipe_writereq(res->ptr, recv[2]);
 				send_count = 1;
 				send[0] = RECONOS_OSIF_CTRL(0xFF, slot->id, send_count);
 				send[1] = len;
 				reconos_osif_write(slot->osif, send, (send_count + 1) * sizeof(uint32_t));
-				reconos_osif_read(slot->osif, recv, 128 * sizeof(uint32_t));
-				pipe_writeareq(res->ptr, (void *)(recv + 1));
+				len = reconos_osif_read(slot->osif, buf, BUF_SIZE_BYTES);
+				pipe_writeareq(res->ptr, (void *)(buf + 1));
 				break;
 			}
 
 			case OSIF_CMD_PIPE_READ: {
 				RESOURCE_CHECK_TYPE(res, RECONOS_RESOURCE_TYPE_PIPE);
 				debug("[reconos-rt-%d] "
-				      "DEBUG: executed pipe_read on 0x%02x", slot->id, res_id);
-				uint32_t len = pipe_read(res->ptr, (void *)(send + 1), recv[2]);
+				      "DEBUG: executing pipe_read on 0x%02x (0x%06x)", slot->id, res_id, recv[2]);
+				uint32_t len = pipe_read(res->ptr, (void *)(buf + 1), recv[2]);
 				send_count = 1;
 				send[0] = RECONOS_OSIF_CTRL(0xFF, slot->id, send_count);
 				send[1] = len;
 				reconos_osif_write(slot->osif, send, (send_count + 1) * sizeof(uint32_t));
-				send_count = len;
-				send[0] = RECONOS_OSIF_CTRL(0xFF, slot->id, send_count);
-				reconos_osif_write(slot->osif, send, (send_count + 1) * sizeof(uint32_t));
+				send_count = len / sizeof(uint32_t);
+				buf[0] = RECONOS_OSIF_CTRL(0xFF, slot->id, send_count);
+				reconos_osif_write(slot->osif, buf, (send_count + 1) * sizeof(uint32_t));
+				debug("[reconos-rt-%d] "
+				      "DEBUG: executed pipe_read on 0x%02x", slot->id, res_id);
 				break;
 			}
 
