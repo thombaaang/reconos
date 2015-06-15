@@ -245,7 +245,7 @@ static inline int _PIPE_READ(hls::stream<uint32> &osif_hw2sw,
 /*
  * Reads several words from the main memory into the local ram. Therefore,
  * divides a large request into smaller ones of length at most
- * MEMIF_CHUNK_BYTES and splits request at page borders to guarantee
+ * RECONOS_MEMIF_CHUNK_BYTES and splits request at page borders to guarantee
  * correct address translation.
  *
  *   src - start address to read from the main memory
@@ -257,14 +257,14 @@ static inline int _PIPE_READ(hls::stream<uint32> &osif_hw2sw,
 	uint32 __len, __rem;\
 	uint32 __addr = (src), __i = 0;\
 	for (__rem = (len); __rem > 0;) {\
-		uint32 __to_border = MEMIF_CHUNK_BYTES - (__addr & MEMIF_CHUNK_MASK);\
+		uint32 __to_border = RECONOS_MEMIF_CHUNK_BYTES - (__addr & RECONOS_MEMIF_CHUNK_MASK);\
 		uint32 __to_rem = __rem;\
 		if (__to_rem < __to_border)\
 			__len = __to_rem;\
 		else\
 			__len = __to_border;\
 		\
-		stream_write(memif_hwt2mem, MEMIF_CMD_READ | __len);\
+		stream_write(memif_hwt2mem, RECONOS_MEMIF_CTRL(RECONOS_MEMIF_CMD_READ, __len));\
 		stream_write(memif_hwt2mem, __addr);\
 		\
 		for (; __len > 0; __len -= 4) {\
@@ -277,7 +277,7 @@ static inline int _PIPE_READ(hls::stream<uint32> &osif_hw2sw,
 /*
  * Writes several words from the local ram into main memory. Therefore,
  * divides a large request into smaller ones of length at most
- * MEMIF_CHUNK_BYTES and splits request at page borders to guarantee
+ * RECONOS_MEMIF_CHUNK_BYTES and splits request at page borders to guarantee
  * correct address translation.
  *
  *   src - array to read data from
@@ -288,14 +288,14 @@ static inline int _PIPE_READ(hls::stream<uint32> &osif_hw2sw,
 	uint32 __len, __rem;\
 	uint32 __addr = (dst), __i = 0;\
 	for (__rem = (len); __rem > 0;) {\
-		uint32 __to_border = MEMIF_CHUNK_BYTES - (__addr & MEMIF_CHUNK_MASK);\
+		uint32 __to_border = RECONOS_MEMIF_CHUNK_BYTES - (__addr & RECONOS_MEMIF_CHUNK_MASK);\
 		uint32 __to_rem = __rem;\
 		if (__to_rem < __to_border)\
 			__len = __to_rem;\
 		else\
 			__len = __to_border;\
 		\
-		stream_write(memif_hwt2mem, MEMIF_CMD_WRITE | __len);\
+		stream_write(memif_hwt2mem, RECONOS_MEMIF_CTRL(RECONOS_MEMIF_CMD_WRITE, __len));\
 		stream_write(memif_hwt2mem, __addr);\
 		\
 		for (; __len > 0; __len -= 4) {\
