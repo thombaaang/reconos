@@ -10,5 +10,6 @@ set_part {<<PART>>}
 create_clock -period <<CLKPRD>> -name default
 source directives.tcl
 csynth_design
-export_design -format syn_dcp
+export_design -evaluate vhdl -format pcore -use_netlist none
+#export_design -format syn_dcp
 exit

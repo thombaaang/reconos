@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="/home/christoph/Documents/github/reconos/demos/eval_pipe/build_img.sim/testbench_isim_beh.wdb" id="1" type="auto">
+         <top_modules>
+            <top_module name="numeric_std" />
+            <top_module name="reconos_defs" />
+            <top_module name="reconos_pkg" />
+            <top_module name="reconos_testbench" />
+            <top_module name="std_logic_1164" />
+            <top_module name="std_logic_arith" />
+            <top_module name="std_logic_unsigned" />
+            <top_module name="testbench" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <WVObjectSize size="9" />
+   <wvobject fp_name="/testbench/sys_clk" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">sys_clk</obj_property>
+      <obj_property name="ObjectShortName">sys_clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench/sys_rst" type="logic" db_ref_id="1">
+      <obj_property name="ElementShortName">sys_rst</obj_property>
+      <obj_property name="ObjectShortName">sys_rst</obj_property>
+   </wvobject>
+   <wvobject fp_name="group44" type="group">
+      <obj_property name="label">sw</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/testbench/ic2sw_data" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">ic2sw_data[31:0]</obj_property>
+         <obj_property name="ObjectShortName">ic2sw_data[31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/ic2sw_empty" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">ic2sw_empty</obj_property>
+         <obj_property name="ObjectShortName">ic2sw_empty</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/ic2sw_re" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">ic2sw_re</obj_property>
+         <obj_property name="ObjectShortName">ic2sw_re</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/sw2ic_data" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">sw2ic_data[31:0]</obj_property>
+         <obj_property name="ObjectShortName">sw2ic_data[31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/sw2ic_full" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">sw2ic_full</obj_property>
+         <obj_property name="ObjectShortName">sw2ic_full</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/sw2ic_we" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">sw2ic_we</obj_property>
+         <obj_property name="ObjectShortName">sw2ic_we</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group43" type="group">
+      <obj_property name="label">mem</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/testbench/mem2hwt_data" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">mem2hwt_data[31:0]</obj_property>
+         <obj_property name="ObjectShortName">mem2hwt_data[31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/mem2hwt_full" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">mem2hwt_full</obj_property>
+         <obj_property name="ObjectShortName">mem2hwt_full</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/mem2hwt_we" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">mem2hwt_we</obj_property>
+         <obj_property name="ObjectShortName">mem2hwt_we</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/hwt2mem_data" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">hwt2mem_data[31:0]</obj_property>
+         <obj_property name="ObjectShortName">hwt2mem_data[31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/hwt2mem_empty" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">hwt2mem_empty</obj_property>
+         <obj_property name="ObjectShortName">hwt2mem_empty</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/hwt2mem_re" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">hwt2mem_re</obj_property>
+         <obj_property name="ObjectShortName">hwt2mem_re</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/arbiter/state" type="other" db_ref_id="1">
+         <obj_property name="ElementShortName">state</obj_property>
+         <obj_property name="ObjectShortName">state</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group39" type="group">
+      <obj_property name="label">slot0</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/testbench/ic2hw_0_data" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">ic2hw_0_data[31:0]</obj_property>
+         <obj_property name="ObjectShortName">ic2hw_0_data[31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/ic2hw_0_empty" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">ic2hw_0_empty</obj_property>
+         <obj_property name="ObjectShortName">ic2hw_0_empty</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/ic2hw_0_re" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">ic2hw_0_re</obj_property>
+         <obj_property name="ObjectShortName">ic2hw_0_re</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/hw2ic_0_data" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">hw2ic_0_data[31:0]</obj_property>
+         <obj_property name="ObjectShortName">hw2ic_0_data[31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/hw2ic_0_full" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">hw2ic_0_full</obj_property>
+         <obj_property name="ObjectShortName">hw2ic_0_full</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/hw2ic_0_we" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">hw2ic_0_we</obj_property>
+         <obj_property name="ObjectShortName">hw2ic_0_we</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/hwt2mem_0_m_data" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">hwt2mem_0_m_data[31:0]</obj_property>
+         <obj_property name="ObjectShortName">hwt2mem_0_m_data[31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/hwt2mem_0_m_full" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">hwt2mem_0_m_full</obj_property>
+         <obj_property name="ObjectShortName">hwt2mem_0_m_full</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/hwt2mem_0_m_we" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">hwt2mem_0_m_we</obj_property>
+         <obj_property name="ObjectShortName">hwt2mem_0_m_we</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group40" type="group">
+      <obj_property name="label">slot1</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/testbench/ic2hw_1_data" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">ic2hw_1_data[31:0]</obj_property>
+         <obj_property name="ObjectShortName">ic2hw_1_data[31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/ic2hw_1_empty" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">ic2hw_1_empty</obj_property>
+         <obj_property name="ObjectShortName">ic2hw_1_empty</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/ic2hw_1_re" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">ic2hw_1_re</obj_property>
+         <obj_property name="ObjectShortName">ic2hw_1_re</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/hw2ic_1_data" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">hw2ic_1_data[31:0]</obj_property>
+         <obj_property name="ObjectShortName">hw2ic_1_data[31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/hw2ic_1_full" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">hw2ic_1_full</obj_property>
+         <obj_property name="ObjectShortName">hw2ic_1_full</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/hw2ic_1_we" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">hw2ic_1_we</obj_property>
+         <obj_property name="ObjectShortName">hw2ic_1_we</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/hwt2mem_1_m_data" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">hwt2mem_1_m_data[31:0]</obj_property>
+         <obj_property name="ObjectShortName">hwt2mem_1_m_data[31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/hwt2mem_1_m_full" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">hwt2mem_1_m_full</obj_property>
+         <obj_property name="ObjectShortName">hwt2mem_1_m_full</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/hwt2mem_1_m_we" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">hwt2mem_1_m_we</obj_property>
+         <obj_property name="ObjectShortName">hwt2mem_1_m_we</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group41" type="group">
+      <obj_property name="label">slot2</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/testbench/ic2hw_2_data" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">ic2hw_2_data[31:0]</obj_property>
+         <obj_property name="ObjectShortName">ic2hw_2_data[31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/ic2hw_2_empty" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">ic2hw_2_empty</obj_property>
+         <obj_property name="ObjectShortName">ic2hw_2_empty</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/ic2hw_2_re" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">ic2hw_2_re</obj_property>
+         <obj_property name="ObjectShortName">ic2hw_2_re</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/hw2ic_2_data" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">hw2ic_2_data[31:0]</obj_property>
+         <obj_property name="ObjectShortName">hw2ic_2_data[31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/hw2ic_2_full" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">hw2ic_2_full</obj_property>
+         <obj_property name="ObjectShortName">hw2ic_2_full</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/hw2ic_2_we" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">hw2ic_2_we</obj_property>
+         <obj_property name="ObjectShortName">hw2ic_2_we</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group42" type="group">
+      <obj_property name="label">slot3</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/testbench/ic2hw_3_data" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">ic2hw_3_data[31:0]</obj_property>
+         <obj_property name="ObjectShortName">ic2hw_3_data[31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/ic2hw_3_empty" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">ic2hw_3_empty</obj_property>
+         <obj_property name="ObjectShortName">ic2hw_3_empty</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/ic2hw_3_re" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">ic2hw_3_re</obj_property>
+         <obj_property name="ObjectShortName">ic2hw_3_re</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/hw2ic_3_data" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">hw2ic_3_data[31:0]</obj_property>
+         <obj_property name="ObjectShortName">hw2ic_3_data[31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/hw2ic_3_full" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">hw2ic_3_full</obj_property>
+         <obj_property name="ObjectShortName">hw2ic_3_full</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/hw2ic_3_we" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">hw2ic_3_we</obj_property>
+         <obj_property name="ObjectShortName">hw2ic_3_we</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject fp_name="group51" type="group">
+      <obj_property name="label">res130</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <wvobject fp_name="/testbench/ic2res_130_data" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">ic2res_130_data[31:0]</obj_property>
+         <obj_property name="ObjectShortName">ic2res_130_data[31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/ic2res_130_empty" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">ic2res_130_empty</obj_property>
+         <obj_property name="ObjectShortName">ic2res_130_empty</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/ic2res_130_re" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">ic2res_130_re</obj_property>
+         <obj_property name="ObjectShortName">ic2res_130_re</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/res2ic_130_data" type="array" db_ref_id="1">
+         <obj_property name="ElementShortName">res2ic_130_data[31:0]</obj_property>
+         <obj_property name="ObjectShortName">res2ic_130_data[31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/res2ic_130_full" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">res2ic_130_full</obj_property>
+         <obj_property name="ObjectShortName">res2ic_130_full</obj_property>
+      </wvobject>
+      <wvobject fp_name="/testbench/res2ic_130_we" type="logic" db_ref_id="1">
+         <obj_property name="ElementShortName">res2ic_130_we</obj_property>
+         <obj_property name="ObjectShortName">res2ic_130_we</obj_property>
+      </wvobject>
+   </wvobject>
+</wave_config>
