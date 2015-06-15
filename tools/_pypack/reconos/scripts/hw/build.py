@@ -33,16 +33,19 @@ def build(args, hwdir):
 def _build_ise(prj, hwdir):
 	hwdir = hwdir if hwdir is not None else prj.basedir + ".hw"
 
-	try:
-		shutil2.chdir(hwdir)
-	except:
-		log.error("hardware directory '" + hwdir + "' not found")
-		return
-	
 	subprocess.call("""
 	  source /opt/Xilinx/""" + prj.impinfo.xil[1] + """/ISE_DS/settings64.sh;
+	  cd """ + hwdir + """ && 
 	  echo -e "run hwclean\nrun bits\nexit\n" | xps -nw system""",
 	  shell=True)
 
 	print()
-	shutil2.chdir(prj.dir)
+
+	with open(shutil2.join(hwdir, "implementation", "system.bin"), "rb") as b:
+		with open(shutil2.join(hwdir, "implementation", "system.bin.rev"), "wb") as r:
+			while True:
+				word = b.read(4)
+				if not word:
+					break;
+				r.write(word[::-1])
+
