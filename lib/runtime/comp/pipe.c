@@ -48,6 +48,9 @@ ssize_t pipe_write(struct pipe* pipe, void *data, size_t len) {
 	return pipe->len;
 }
 
+/*
+ * @see header
+ */
 ssize_t pipe_writereq(struct pipe *pipe, size_t len) {
 	sem_wait(&pipe->read);
 
@@ -58,6 +61,9 @@ ssize_t pipe_writereq(struct pipe *pipe, size_t len) {
 	return pipe->len;
 }
 
+/*
+ * @see header
+ */
 void pipe_writeareq(struct pipe *pipe, void *data) {
 	memcpy(pipe->buf, data, pipe->len);
 

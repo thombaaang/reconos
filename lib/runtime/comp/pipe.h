@@ -52,7 +52,7 @@ extern ssize_t pipe_write(struct pipe *pipe, void *data, size_t len);
 extern ssize_t pipe_writereq(struct pipe *pipe, size_t len);
 
 /*
- * Writes to the pipe after thre request was granted.
+ * Writes to the pipe after the request was granted.
  *
  *   pipe - pointer to the pipe
  *   data - pointer to the data to write
