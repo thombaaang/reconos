@@ -596,8 +596,8 @@ int osif_init() {
 		goto reg_failed;
 	}
 
-	printk(KERN_INFO "[reconos-osif] "
-	                 "driver initialized successfully\n");
+	__printk(KERN_INFO "[reconos-osif] "
+	                   "driver initialized successfully\n");
 
 	goto out;
 
