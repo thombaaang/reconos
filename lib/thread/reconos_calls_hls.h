@@ -240,7 +240,7 @@ static inline int _PIPE_READ(hls::stream<uint32> &osif_hw2sw,
 	stream_write(osif_hw2sw, CONCAT_CTRL(__run_id, 0xFF, 0x0001)),\
 	stream_write(osif_hw2sw, OSIF_CMD_THREAD_GET_INIT_DATA),\
 	stream_read(osif_sw2hw),\
-	stream_read(osif_hw2sw))
+	stream_read(osif_sw2hw))
 
 /*
  * Reads several words from the main memory into the local ram. Therefore,
