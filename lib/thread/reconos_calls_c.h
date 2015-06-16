@@ -44,7 +44,7 @@
  *   name - name of the ram
  */
 #define RAM(type,size,name)\
- 	type *name
+ 	type name[size]
 
 /*
  * Posts the semaphore specified by handle.
@@ -230,7 +230,7 @@ static inline int _PIPE_READ(struct reconos_resource *res,
  *   len - number of bytes to transmit (bytes)
  */
 #define MEM_READ(src,dst,len)\
-	dst = (void *)src
+	memcpy((uint32_t *)(dst), (uint32_t *)(src), (len))
 
 /*
  * Writes several words from the local ram into the main memory.
@@ -239,6 +239,7 @@ static inline int _PIPE_READ(struct reconos_resource *res,
  *   dst - start address to read from the main memory
  *   len - number of bytes to transmit (bytes)
  */
-#define MEM_WRITE(src, dst, len)
+#define MEM_WRITE(src, dst, len)\
+	memcpy((uint32_t *)(dst), (uint32_t *)(src), (len))
 
 #endif /* RECONOS_CALLS_H */
