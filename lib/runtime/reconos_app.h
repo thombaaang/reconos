@@ -87,6 +87,15 @@ void reconos_app_cleanup();
  *   rt   - pointer to the ReconOS thread
  */
 struct reconos_thread *reconos_thread_create_hwt_<<Name>>();
+
+/*
+ * Creates a hardware thread in the specified slot with its associated
+ * resources and initializes it with init data.
+ *
+ *   rt   - pointer to the ReconOS thread
+ *   init - initialization data
+ */
+struct reconos_thread *reconos_thread_createi_hwt_<<Name>>(void *init);
 <<=end generate=>>
 
 <<=generate for HasSw=>>
@@ -96,6 +105,14 @@ struct reconos_thread *reconos_thread_create_hwt_<<Name>>();
  *   rt   - pointer to the ReconOS thread
  */
 struct reconos_thread *reconos_thread_create_swt_<<Name>>();
+
+/*
+ * Creates a software thread with its associated resources and initializes
+ * it with init data.
+ *
+ *   rt   - pointer to the ReconOS thread
+ */
+struct reconos_thread *reconos_thread_createi_swt_<<Name>>(void *init);
 <<=end generate=>>
 
 /*
