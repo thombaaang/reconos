@@ -1,7 +1,6 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;
-use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.all;
 
 library reconos_v3_01_a;
 use reconos_v3_01_a.reconos_pkg.all;
@@ -40,10 +39,23 @@ entity rt_eval is
 end entity rt_eval;
 
 architecture implementation of rt_eval is
+	constant C_RAM_LEN_WORDS   : integer := 128;
+	constant C_RAM_LEN_BYTES   : integer := C_RAM_LEN_WORDS * 4;
+	constant C_RAM_LEN_BYTES_V : std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(C_RAM_LEN_BYTES, 32));
+	type RAM_T is array (0 to C_RAM_LEN_WORDS - 1) of std_logic_vector(31 downto 0);
+
+	signal ram : RAM_T;
+	signal ram_addr  : std_logic_vector(31 downto 0);
+	signal ram_idata : std_logic_vector(31 downto 0);
+	signal ram_odata : std_logic_vector(31 downto 0);
+	signal ram_we    : std_logic;
+
 	signal i_osif  : i_osif_t;
 	signal o_osif  : o_osif_t;
 	signal i_memif : i_memif_t;
 	signal o_memif : o_memif_t;
+	signal i_ram   : i_ram_t;
+	signal o_ram   : o_ram_t;
 
 	type STATE_TYPE is (STATE_THREAD_INIT,
 	                    STATE_CMD,STATE_EXEC,STATE_ACK);
@@ -53,6 +65,17 @@ architecture implementation of rt_eval is
 	signal ignore  : std_logic_vector(31 downto 0);
 begin
 	DEBUG <= (others => '0');
+
+	ram_ctrl : process (HWT_Clk) is
+	begin
+		if rising_edge(HWT_Clk) then
+			if ram_we = '1' then
+				ram(to_integer(unsigned(ram_addr))) <= ram_idata;
+			else
+				ram_odata <= ram(to_integer(unsigned(ram_addr)));
+			end if;
+		end if;
+	end process ram_ctrl;
 
 	osif_setup (
 		i_osif,
@@ -75,6 +98,15 @@ begin
 		MEMIF_Hwt2Mem_Full,
 		MEMIF_Hwt2Mem_WE
 	);
+
+	ram_setup (
+		i_ram,
+		o_ram,
+		ram_addr,
+		ram_idata,
+		ram_odata,
+		ram_we
+	);
 	
 	reconos_fsm: process (HWT_Clk,HWT_Rst,o_osif,o_memif) is
 		variable resume, done : boolean;
@@ -82,6 +114,7 @@ begin
 		if HWT_Rst = '1' then
 			osif_reset(o_osif);
 			memif_reset(o_memif);
+			ram_reset(o_ram);
 			state <= STATE_THREAD_INIT;
 		elsif rising_edge(HWT_Clk) then
 			case state is
@@ -94,6 +127,7 @@ begin
 				when STATE_CMD =>
 					MBOX_GET(i_osif, o_osif, eval_cmdhw, cmd, done);
 					if done then
+							ts <= TIMER;
 							state <= STATE_EXEC;
 					end if;
 				
@@ -112,12 +146,28 @@ begin
 							end if;
 
 						when x"00000020" =>
-							ts <= TIMER;
 							MBOX_PUT(i_osif, o_osif, eval_mboxsw, x"AFFEDEAD", ignore, done);
 
 						when x"00000021" =>
-							ts <= TIMER;
 							MBOX_PUT(i_osif, o_osif, eval_mboxhw, x"AFFEDEAD", ignore, done);
+
+						when x"00000030" =>
+							PIPE_READ(i_osif, o_osif, i_ram, o_ram, eval_pipesw, x"00000200", ignore, done);
+							if done then
+								ts <= TIMER;
+							end if;
+
+						when x"00000031" =>
+							PIPE_READ(i_osif, o_osif, i_ram, o_ram, eval_pipehw, x"00000200", ignore, done);
+							if done then
+								ts <= TIMER;
+							end if;
+
+						when x"00000040" =>
+							PIPE_WRITE(i_osif, o_osif, i_ram, o_ram, eval_pipesw, x"00000200", ignore, done);
+
+						when x"00000041" =>
+							PIPE_WRITE(i_osif, o_osif, i_ram, o_ram, eval_pipehw, x"00000200", ignore, done);
 
 						when others =>
 					end case;

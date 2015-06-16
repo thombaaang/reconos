@@ -7,9 +7,13 @@
 #include "timer.h"
 #endif
 
+#define LEN_WORDS 128
+#define LEN_BYTES (LEN_WORDS * 4)
+
 THREAD_ENTRY(, uint32 timer) {
 	uint32 d = 0xaffedead;
 	uint32 ts = 0;
+	uint32 buf[LEN_WORDS];
 
 	THREAD_INIT();
 
@@ -55,6 +59,42 @@ THREAD_ENTRY(, uint32 timer) {
 				ts = timer_get();
 #endif
 				MBOX_PUT(eval_mboxhw, d);
+				break;
+
+			case 0x00000030:
+				PIPE_READ(eval_pipesw, buf, LEN_BYTES);
+#ifdef __SYNTHESIS__
+				ts = timer;
+#else
+				ts = timer_get();
+#endif
+				break;
+
+			case 0x00000031:
+				PIPE_READ(eval_pipehw, buf, LEN_BYTES);
+#ifdef __SYNTHESIS__
+				ts = timer;
+#else
+				ts = timer_get();
+#endif
+				break;
+
+			case 0x00000040:
+#ifdef __SYNTHESIS__
+				ts = timer;
+#else
+				ts = timer_get();
+#endif
+				PIPE_WRITE(eval_pipesw, buf, LEN_BYTES);
+				break;
+
+			case 0x00000041:
+#ifdef __SYNTHESIS__
+				ts = timer;
+#else
+				ts = timer_get();
+#endif
+				PIPE_WRITE(eval_pipehw, buf, LEN_BYTES);
 				break;
 
 			default:
