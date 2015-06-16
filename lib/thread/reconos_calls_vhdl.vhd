@@ -72,7 +72,7 @@ package reconos_calls is
 	procedure osif_call_0_0 (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		dst           : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		dst           : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		call_id       : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable done : out boolean
 	);
@@ -92,7 +92,7 @@ package reconos_calls is
 	procedure osif_call_0_1 (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		dst           : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		dst           : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		call_id       : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		signal ret0   : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable done : out boolean
@@ -113,7 +113,7 @@ package reconos_calls is
 	procedure osif_call_0_2 (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		dst           : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		dst           : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		call_id       : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		signal ret0   : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		signal ret1   : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
@@ -136,7 +136,7 @@ package reconos_calls is
 	procedure osif_call_1_1 (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		dst           : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		dst           : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		call_id       : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		arg0          : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		signal ret0   : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
@@ -160,7 +160,7 @@ package reconos_calls is
 	procedure osif_call_1_2 (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		dst           : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		dst           : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		call_id       : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		arg0          : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		signal ret0   : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
@@ -184,7 +184,7 @@ package reconos_calls is
 	procedure osif_call_2_1 (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		dst           : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		dst           : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		call_id       : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		arg0          : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		arg1          : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
@@ -204,7 +204,7 @@ package reconos_calls is
 	procedure SEM_POST (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		handle        : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		handle        : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		signal result : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable done : out boolean
 	);
@@ -221,7 +221,7 @@ package reconos_calls is
 	procedure SEM_WAIT (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		handle        : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		handle        : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		signal result : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable done : out boolean
 	);
@@ -238,7 +238,7 @@ package reconos_calls is
 	procedure MUTEX_LOCK (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		handle        : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		handle        : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		signal result : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable done : out boolean
 	);
@@ -254,7 +254,7 @@ package reconos_calls is
 	procedure MUTEX_UNLOCK (
 		signal i_osif  : in  i_osif_t;
 		signal o_osif  : out o_osif_t;
-		handle         : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		handle         : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		signal result  : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable done  : out boolean
 	);
@@ -271,7 +271,7 @@ package reconos_calls is
 	procedure MUTEX_TRYLOCK (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		handle        : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		handle        : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		signal result : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable done : out boolean
 	);
@@ -289,7 +289,7 @@ package reconos_calls is
 	procedure MBOX_PUT (
 		signal i_osif  : in  i_osif_t;
 		signal o_osif  : out o_osif_t;
-		handle         : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		handle         : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		word           : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		signal result  : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable done  : out boolean
@@ -307,7 +307,7 @@ package reconos_calls is
 	procedure MBOX_GET (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		handle        : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		handle        : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		signal word   : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable done : out boolean
 	);
@@ -326,7 +326,7 @@ package reconos_calls is
 	procedure MBOX_TRYPUT (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		handle        : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		handle        : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		word          : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		signal result : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable done : out boolean
@@ -346,9 +346,55 @@ package reconos_calls is
 	procedure MBOX_TRYGET (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		handle        : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		handle        : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		signal word   : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		signal result : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
+		variable done : out boolean
+	);
+
+	--
+	-- Writes to a pipe specified by handle.
+	--
+	--   i_osif - i_osif_t record
+	--   o_osif - o_osif_t record
+	--   i_ram  - i_ram_t record
+	--   o_ram  - o_ram_t record
+	--   handle - index representing the resource in the resource array
+	--   len    - number of bytes to write
+	--   lenrt  - actual number of bytes written
+	--   done   - indicates when call finished
+	--
+	procedure PIPE_WRITE (
+		signal i_osif : in  i_osif_t;
+		signal o_osif : out o_osif_t;
+		signal i_ram  : in  i_ram_t;
+		signal o_ram  : out o_ram_t;
+		handle        : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
+		len           : in  std_logic_vector(31 downto 0);
+		signal lenrt  : out std_logic_vector(31 downto 0);
+		variable done : out boolean
+	);
+
+	--
+	-- Reads from a pipe specified by handle.
+	--
+	--   i_osif - i_osif_t record
+	--   o_osif - o_osif_t record
+	--   i_ram  - i_ram_t record
+	--   o_ram  - o_ram_t record
+	--   handle - index representing the resource in the resource array
+	--   len    - number of bytes to write
+	--   lenrt  - actual number of bytes written
+	--   done   - indicates when call finished
+	--
+	procedure PIPE_READ (
+		signal i_osif : in  i_osif_t;
+		signal o_osif : out o_osif_t;
+		signal i_ram  : in  i_ram_t;
+		signal o_ram  : out o_ram_t;
+		handle        : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
+		len           : in  std_logic_vector(31 downto 0);
+		signal lenrt  : out std_logic_vector(31 downto 0);
 		variable done : out boolean
 	);
 
@@ -528,7 +574,7 @@ package body reconos_calls is
 	procedure osif_call_0_0 (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		dst           : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		dst           : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		call_id       : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable done : out boolean
 	) is begin
@@ -568,7 +614,7 @@ package body reconos_calls is
 	procedure osif_call_0_1 (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		dst           : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		dst           : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		call_id       : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		signal ret0   : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable done : out boolean
@@ -623,7 +669,7 @@ package body reconos_calls is
 	procedure osif_call_0_2 (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		dst           : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		dst           : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		call_id       : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		signal ret0   : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		signal ret1   : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
@@ -686,7 +732,7 @@ package body reconos_calls is
 	procedure osif_call_1_1 (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		dst           : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		dst           : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		call_id       : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		arg0          : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		signal ret0   : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
@@ -749,7 +795,7 @@ package body reconos_calls is
 	procedure osif_call_1_2 (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		dst           : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		dst           : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		call_id       : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		arg0          : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		signal ret0   : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
@@ -819,7 +865,7 @@ package body reconos_calls is
 	procedure osif_call_2_1 (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		dst           : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		dst           : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		call_id       : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		arg0          : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		arg1          : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
@@ -889,7 +935,7 @@ package body reconos_calls is
 	procedure SEM_POST (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		handle        : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		handle        : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		signal result : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable done : out boolean
 	) is begin
@@ -902,7 +948,7 @@ package body reconos_calls is
 	procedure SEM_WAIT (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		handle        : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		handle        : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		signal result : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable done : out boolean
 	) is begin
@@ -915,7 +961,7 @@ package body reconos_calls is
 	procedure MUTEX_LOCK (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		handle        : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		handle        : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		signal result : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable done : out boolean
 	) is begin
@@ -928,7 +974,7 @@ package body reconos_calls is
 	procedure MUTEX_UNLOCK (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		handle        : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		handle        : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		signal result : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable done : out boolean
 	) is begin
@@ -941,7 +987,7 @@ package body reconos_calls is
 	procedure MUTEX_TRYLOCK (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		handle        : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		handle        : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		signal result : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable done : out boolean
 	) is begin
@@ -954,7 +1000,7 @@ package body reconos_calls is
 	procedure MBOX_PUT (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		handle        : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		handle        : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		word          : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		signal result : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable done : out boolean
@@ -968,7 +1014,7 @@ package body reconos_calls is
 	procedure MBOX_GET (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		handle        : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		handle        : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		signal word   : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable done : out boolean
 	) is begin
@@ -981,7 +1027,7 @@ package body reconos_calls is
 	procedure MBOX_TRYPUT (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		handle        : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		handle        : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		word          : in  std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		signal result : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable done : out boolean
@@ -995,13 +1041,229 @@ package body reconos_calls is
 	procedure MBOX_TRYGET (
 		signal i_osif : in  i_osif_t;
 		signal o_osif : out o_osif_t;
-		handle        : in  std_logic_vector(C_OSIF_SRC_WIDTH - 1 downto 0);
+		handle        : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
 		signal word   : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		signal result : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		variable done : out boolean
 	) is begin
 		osif_call_0_2(i_osif, o_osif, handle, OSIF_CMD_MBOX_TRYGET, word, result, done);
 	end procedure MBOX_TRYGET;
+
+	--
+	-- @see header
+	--
+	procedure PIPE_WRITE (
+		signal i_osif : in  i_osif_t;
+		signal o_osif : out o_osif_t;
+		signal i_ram  : in  i_ram_t;
+		signal o_ram  : out o_ram_t;
+		handle        : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
+		len           : in  std_logic_vector(31 downto 0);
+		signal lenrt  : out std_logic_vector(31 downto 0);
+		variable done : out boolean
+	) is begin
+		done := False;
+
+		case i_osif.step is
+			when 0 =>
+				o_osif.hw2sw_we <= '1';
+				o_osif.hw2sw_data <= i_osif.run_id & handle & x"0002";
+
+				o_osif.step <= 1;
+
+			when 1 =>
+				if i_osif.hw2sw_full = '0' then
+					o_osif.hw2sw_data <= OSIF_CMD_PIPE_WRITE;
+
+					o_osif.step <= 2;
+				end if;
+
+			when 2 =>
+				if i_osif.hw2sw_full = '0' then
+					o_osif.hw2sw_data <= len;
+
+					o_osif.step <= 3;
+				end if;
+
+			when 3 =>
+				if i_osif.hw2sw_full = '0' then
+					o_osif.hw2sw_we <= '0';
+					o_osif.sw2hw_re <= '1';
+
+					o_osif.step <= 4;
+				end if;
+
+			when 4 =>
+				if i_osif.sw2hw_empty = '0' then
+					o_osif.step <= 5;
+				end if;
+
+			when 5 =>
+				if i_osif.sw2hw_empty = '0' then
+					lenrt <= i_osif.sw2hw_data;
+					o_ram.remm <= unsigned(i_osif.sw2hw_data);
+					o_osif.sw2hw_re <= '0';
+
+					o_osif.step <= 6;
+				end if;
+
+			when 6 =>
+				o_osif.hw2sw_we <= '1';
+				o_osif.hw2sw_data <= i_osif.run_id & handle & std_logic_vector(i_ram.remm(17 downto 2));
+
+				o_osif.step <= 7;
+
+			when 7 =>
+				if i_osif.hw2sw_full = '0' then
+					o_osif.hw2sw_we <= '0';
+
+					o_ram.ram_addr <= (others => '0');
+
+					o_osif.step <= 8;
+				end if;
+
+			when 8 =>
+				o_ram.ram_addr <= i_ram.ram_addr + 1;
+
+				o_osif.step <= 9;
+
+			when 9 =>
+				o_osif.hw2sw_we <= '1';
+				o_osif.hw2sw_data <= i_ram.ram_data;
+
+				o_ram.ram_addr <= i_ram.ram_addr + 1;
+
+				o_osif.step <= 10;
+
+			when 10 =>
+				if i_osif.hw2sw_full = '0' then
+					o_osif.hw2sw_data <= i_ram.ram_data;
+
+					o_ram.ram_addr <= i_ram.ram_addr + 1;
+
+					o_ram.remm <= i_ram.remm - 4;
+
+					if i_ram.remm - 4 = 0 then
+						o_osif.hw2sw_we <= '0';
+
+						o_osif.step <= 12;
+					end if;
+				else
+					o_osif.hw2sw_we <= '0';
+
+					o_ram.ram_addr <= i_ram.ram_addr - 2;
+
+					o_osif.step <= 11;
+				end if;
+
+			when 11 =>
+				if i_osif.hw2sw_full = '0' then
+					o_osif.step <= 8;
+				end if;
+
+			when others =>
+				o_osif.step <= 0;
+				done := True;
+
+		end case;
+	end procedure PIPE_WRITE;
+
+	--
+	-- @see header
+	--
+	procedure PIPE_READ (
+		signal i_osif : in  i_osif_t;
+		signal o_osif : out o_osif_t;
+		signal i_ram  : in  i_ram_t;
+		signal o_ram  : out o_ram_t;
+		handle        : in  std_logic_vector(C_OSIF_ID_WIDTH - 1 downto 0);
+		len           : in  std_logic_vector(31 downto 0);
+		signal lenrt  : out std_logic_vector(31 downto 0);
+		variable done : out boolean
+	) is begin
+		done := False;
+
+		case i_osif.step is
+			when 0 =>
+				o_osif.hw2sw_we <= '1';
+				o_osif.hw2sw_data <= i_osif.run_id & handle & x"0002";
+
+				o_osif.step <= 1;
+
+			when 1 =>
+				if i_osif.hw2sw_full = '0' then
+					o_osif.hw2sw_data <= OSIF_CMD_PIPE_READ;
+
+					o_osif.step <= 2;
+				end if;
+
+			when 2 =>
+				if i_osif.hw2sw_full = '0' then
+					o_osif.hw2sw_data <= len;
+
+					o_osif.step <= 3;
+				end if;
+
+			when 3 =>
+				if i_osif.hw2sw_full = '0' then
+					o_osif.hw2sw_we <= '0';
+					o_osif.sw2hw_re <= '1';
+
+					o_osif.step <= 4;
+				end if;
+
+			when 4 =>
+				if i_osif.sw2hw_empty = '0' then
+					o_osif.step <= 5;
+				end if;
+
+			when 5 =>
+				if i_osif.sw2hw_empty = '0' then
+					lenrt <= i_osif.sw2hw_data;
+					o_ram.remm <= unsigned(i_osif.sw2hw_data);
+
+					o_osif.step <= 6;
+				end if;
+
+			when  6 =>
+				if i_osif.sw2hw_empty = '0' then
+					o_osif.step <= 7;
+				end if;
+
+			when 7 =>
+				if i_osif.sw2hw_empty = '0' then
+					o_ram.ram_data <= i_osif.sw2hw_data;
+					o_ram.ram_addr <= (others => '0');
+					o_ram.ram_we <= '1';
+
+					o_ram.remm <= i_ram.remm - 4;
+
+					o_osif.step <= 8;
+				end if;
+
+			when 8 =>
+				if i_osif.sw2hw_empty = '0' then
+					o_ram.ram_data <= i_osif.sw2hw_data;
+					o_ram.ram_addr <= i_ram.ram_addr + 1;
+					o_ram.ram_we <= '1';
+
+					o_ram.remm <= i_ram.remm - 4;
+
+					if i_ram.remm - 4 = 0 then
+						o_osif.sw2hw_re <= '0';
+
+						o_osif.step <= 9;
+					end if;
+				end if;
+
+			when others =>
+				o_ram.ram_we <= '0';
+
+				o_osif.step <= 0;
+				done := True;
+
+		end case;
+	end procedure PIPE_READ;
 
 	--
 	-- @see header
