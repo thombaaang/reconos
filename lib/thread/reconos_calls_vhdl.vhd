@@ -16,8 +16,6 @@
 --
 -- ======================================================================
 
-<<reconos_preproc>>
-
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -1100,8 +1098,8 @@ package body reconos_calls is
 
 			when 5 =>
 				if i_osif.sw2hw_empty = '0' then
-					lenrt <= i_osif.sw2hw_data;
-					o_ram.remm <= unsigned(i_osif.sw2hw_data);
+					lenrt <= x"00" & i_osif.sw2hw_data(23 downto 0);
+					o_ram.remm <= unsigned(x"00" & i_osif.sw2hw_data(23 downto 0));
 					o_osif.sw2hw_re <= '0';
 
 					o_osif.step <= 6;
@@ -1219,8 +1217,8 @@ package body reconos_calls is
 
 			when 5 =>
 				if i_osif.sw2hw_empty = '0' then
-					lenrt <= i_osif.sw2hw_data;
-					o_ram.remm <= unsigned(i_osif.sw2hw_data);
+					lenrt <= x"00" & i_osif.sw2hw_data(23 downto 0);
+					o_ram.remm <= unsigned(x"00" & i_osif.sw2hw_data(23 downto 0));
 
 					o_osif.step <= 6;
 				end if;
