@@ -1062,15 +1062,17 @@ void *dt_delegate(void *arg) {
 		reconos_osif_read(slot->osif, recv, RECV_SIZE_BYTES);
 
 		res_id = RECONOS_OSIF_DST(recv[0]);
-		for (i = 0; i < slot->rt->resource_count; i++) {
-			res = &slot->rt->resources[i];
-			if (res->id == res_id) {
-				break;
+		if (res_id != 0xFF) {
+			for (i = 0; i < slot->rt->resource_count; i++) {
+				res = &slot->rt->resources[i];
+				if (res->id == res_id) {
+					break;
+				}
 			}
-		}
-		if (i == slot->rt->resource_count) {
-			panic("[reconos-rt-%d] "
-			      "ERROR: resource 0x%02x not found", slot->id, res_id);
+			if (i == slot->rt->resource_count) {
+				panic("[reconos-rt-%d] "
+				      "ERROR: resource 0x%02x not found", slot->id, res_id);
+			}
 		}
 
 		switch (recv[1] & OSIF_CMD_MASK) {
@@ -1125,6 +1127,16 @@ void *dt_delegate(void *arg) {
 				reconos_osif_write(slot->osif, buf, (send_count + 1) * sizeof(uint32_t));
 				debug("[reconos-rt-%d] "
 				      "DEBUG: executed pipe_read on 0x%02x", slot->id, res_id);
+				break;
+			}
+
+			case OSIF_CMD_THREAD_GET_INIT_DATA: {
+				send_count = 1;
+				send[0] = RECONOS_OSIF_CTRL(0xFF, slot->id, send_count);
+				send[1] = (uint32_t)slot->rt->init_data;
+				reconos_osif_write(slot->osif, send, (send_count + 1) * sizeof(uint32_t));
+				debug("[reconos-rt-%d] "
+				      "DEBUG: executed get_init_data (0x%08x)", slot->id, (uint32_t)slot->rt->init_data);
 				break;
 			}
 
