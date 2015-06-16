@@ -96,6 +96,23 @@ void timer_cleanup() {
 	ptr = 0;
 }
 
+/*
+ * @see header
+ */
 float timer_toms(unsigned int t) {
 	return t / (CLK_FREQ / 1000.0);
+}
+
+/*
+ * @see header
+ */
+unsigned int timer_diff(unsigned int ts0, unsigned int ts1) {
+	return ts0 < ts1 ? ts1 - ts0 : ts0 - ts1;
+}
+
+/*
+ * @see header
+ */
+float timer_diffms(unsigned int ts0, unsigned int ts1) {
+	return timer_toms(timer_diff(ts0, ts1));
 }

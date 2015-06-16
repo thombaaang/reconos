@@ -58,10 +58,26 @@ unsigned int timer_get();
 void timer_cleanup();
 
 /*
- * Converts the timer value to millisecongs.
+ * Converts the timer value to milliseconds.
  *
  *   t - timer value or difference
  */
 float timer_toms(unsigned int t);
+
+/*
+ * Calculates the difference of two timestamps.
+ *
+ *   ts0 - first timestamp
+ *   ts1 - second simestamp
+ */
+unsigned int timer_diff(unsigned int ts0, unsigned int ts1);
+
+/*
+ * Calculates the difference of two timestamps in milliseconds.
+ *
+ *   ts0 - first timestamp
+ *   ts1 - second simestamp
+ */
+float timer_diffms(unsigned int ts0, unsigned int ts1);
 
 #endif /* TIMER_H */
