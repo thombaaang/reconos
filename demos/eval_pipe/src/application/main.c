@@ -12,6 +12,7 @@ int main(int argc, char **argv) {
 	int i;
 	struct ppm img;
 	struct ppm img2;
+	unsigned int start, end;
 
 	if (argc != 2) {
 		printf("ERROR: First argument must be filname of image\n");
@@ -20,6 +21,7 @@ int main(int argc, char **argv) {
 
 	reconos_init();
 	reconos_app_init();
+	timer_init();
 
 	reconos_thread_create_hwt_read();
 	reconos_thread_create_hwt_write();
@@ -29,6 +31,7 @@ int main(int argc, char **argv) {
 	ppm_init_empty(&img);
 	ppm_read(&img, argv[1]);
 
+	start = timer_get();
 	mbox_put(read_cmd_ptr, (uint32_t)img.data);
 	mbox_put(read_cmd_ptr, img.height);
 
@@ -40,11 +43,15 @@ int main(int argc, char **argv) {
 	mbox_put(write_cmd_ptr, img2.height);
 
 	mbox_get(write_cmd_ptr);
+	end = timer_get();
 
 	ppm_write(&img2, "evalpipe_out.ppm");
 
+	printf("Writting output file (%f ms)\n", timer_diffms(start, end));
+
 	reconos_app_cleanup();
 	reconos_cleanup();
+	timer_cleanup();
 
 	return 0;
 }
