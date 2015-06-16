@@ -31,5 +31,8 @@
  * directory and not resource array indexed by these ids.
  */
 typedef uint32_t uint32;
+typedef uint8_t uint8;
+
+typedef int bool;
 
 #endif /* AP_CINT_H */
