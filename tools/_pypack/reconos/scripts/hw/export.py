@@ -83,6 +83,7 @@ def _export_hw_ise(prj, hwdir, link):
 			d["Ics"] = []
 			d["NumIcs"] = 0
 			d["HasIcs"] = False
+			d["Ports"] = s.ports
 			dictionary["SLOTS"].append(d)
 	dictionary["CLOCKS"] = []
 	for c in prj.clocks:
@@ -112,7 +113,12 @@ def _export_hw_ise(prj, hwdir, link):
 	# interconnect between resources and threads
 	ics = []
 	for s in prj.slots:
-		sd = [_ for _ in dictionary["SLOTS"] if _["_e"] == s][0]
+		sd = [_ for _ in dictionary["SLOTS"] if _["_e"] == s]
+		if not sd:
+			continue
+		else:
+			sd = sd[0]
+
 		for r in [_ for _ in s.acc_resources() if _.mode == "hw"]:
 			rd = [_ for _ in dictionary["RESOURCES"] if _["_e"] == r][0]
 			sd["Ics"].append({"Id": num_ics, "Type": "arbiter"})
@@ -217,6 +223,7 @@ def _export_hw_thread_ise(prj, hwdir, link, thread):
 		incls = shutil2.listfiles(srcs, True)
 		dictionary["INCLUDES"] = [{"File": shutil2.trimext(_)} for _ in incls]
 		dictionary["RESOURCES"] = []
+		dictionary["PORTS"] = thread.ports
 		for i, r in enumerate(thread.resources):
 			d = {}
 			d["NameUpper"] = (r.group + "_" + r.name).upper()

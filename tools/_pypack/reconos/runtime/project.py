@@ -79,11 +79,12 @@ class Resource:
 # Class representing a slot in the project.
 #
 class Slot:
-	def __init__(self, name, id_, clock):
+	def __init__(self, name, id_, clock, ports):
 		self.name = name
 		self.id = id_
 		self.clock = clock
 		self.threads = []
+		self.ports = ports
 
 	def acc_resources(self):
 		return set([r for t in self.threads for r in t.resources])
@@ -100,13 +101,14 @@ class Slot:
 class Thread:
 	_id = 0
 
-	def __init__(self, name, slots, hw, sw, res, mem):
+	def __init__(self, name, slots, hw, sw, res, mem, ports):
 		self.id = Thread._id
 		Thread._id += 1
 		self.name = name
 		self.slots = slots
 		self.resources = res
 		self.mem = mem
+		self.ports = ports
 		if hw is not None:
 			hw = hw.split(",")
 			self.hwsource = hw[0]
@@ -189,7 +191,10 @@ class Project:
 			log.error("ReconOS repository not found")
 
 	def get_template(self, name):
-		return shutil2.join(self.impinfo.repo, "templates", name)
+		if shutil2.exists(shutil2.join(self.dir, "templates", name)):
+			return shutil2.join(self.dir, "templates", name)
+		else:
+			return shutil2.join(self.impinfo.repo, "templates", name)
 
 	def apply_template(self, name, dictionary, output, link = False):
 		shutil2.mkdir(output)
@@ -332,10 +337,15 @@ class Project:
 			if not clock:
 				log.error("Clock not found")
 
+			if cfg.has_option(s, "Ports"):
+				ports = [re.match(r"(?P<Name>.*)\((?P<Options>.*)\)", _).groupdict() for _ in cfg.get(s, "Ports").split(",")]
+			else:
+				ports = []
+
 			for i in r:
 				log.debug("Found slot '" + str(name) + "(" + str(i) + ")" + "' (" + str(id_) + "," + str(clock[0]) + ")")
 
-				slot = Slot(name + "(" + str(i) + ")", id_ + i, clock[0])
+				slot = Slot(name + "(" + str(i) + ")", id_ + i, clock[0], ports)
 				self.slots.append(slot)
 
 	#
@@ -379,9 +389,15 @@ class Project:
 				mem = cfg.get(t, "UseMem") in ["True", "true"]
 			else:
 				mem = True
+			if cfg.has_option(t, "Ports"):
+				ports = [re.match(r"(?P<Name>.*)\((?P<Options>.*)\)", _).groupdict() for _ in cfg.get(t, "Ports").split(",")]
+			else:
+				ports = []
+
+
 
 			log.debug("Found thread '" + str(name) + "' (" + str(slots) + "," + str(hw) + "," + str(sw) + "," + str(res) + ")")
 
-			thread = Thread(name, slots, hw, sw, res, mem)
+			thread = Thread(name, slots, hw, sw, res, mem, ports)
 			for s in slots: s.threads.append(thread)
 			self.threads.append(thread)
