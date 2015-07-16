@@ -338,7 +338,7 @@ class Project:
 				log.error("Clock not found")
 
 			if cfg.has_option(s, "Ports"):
-				ports = [re.match(r"(?P<Name>.*)\((?P<Options>.*)\)", _).groupdict() for _ in cfg.get(s, "Ports").split(",")]
+				ports = [re.match(r"(?P<Name>.*)\((?P<Options>.*)\)", _).groupdict() for _ in re.findall("[a-zA-Z0-9_]*?\(.*?\)", cfg.get(s, "Ports"))]
 			else:
 				ports = []
 
@@ -390,7 +390,7 @@ class Project:
 			else:
 				mem = True
 			if cfg.has_option(t, "Ports"):
-				ports = [re.match(r"(?P<Name>.*)\((?P<Options>.*)\)", _).groupdict() for _ in cfg.get(t, "Ports").split(",")]
+				ports = [re.match(r"(?P<Name>.*)\((?P<Options>.*)\)", _).groupdict() for _ in re.findall("[a-zA-Z0-9_]*?\(.*?\)", cfg.get(t, "Ports"))]
 			else:
 				ports = []
 
