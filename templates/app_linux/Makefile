@@ -1,7 +1,7 @@
 <<reconos_preproc>>
 
 CC = $(CROSS_COMPILE)gcc
-CFLAGS += -Wall -I <<REPO_REL>> -I lib/include -D RECONOS_OS_<<OS>> -D RECONOS_BOARD_<<BOARD>> <<CFLAGS>>
+CFLAGS += -Wall -I <<REPO_REL>> -I lib/include -I application -D RECONOS_OS_<<OS>> -D RECONOS_BOARD_<<BOARD>> <<CFLAGS>>
 LDFLAGS += -static -lpthread <<LDFLAGS>>
 
 MKDIRP = mkdir -p
