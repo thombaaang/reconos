@@ -101,6 +101,8 @@ struct reconos_thread {
 
 	char **bitstreams;
 	int *bitstream_lengths;
+	struct hwslot **allowed_hwslots;
+	size_t allowed_hwslots_count;
 	void *(*swentry)(void *data);
 
 	int osif;
@@ -164,6 +166,17 @@ void reconos_thread_setresourcepointers(struct reconos_thread *rt,
 void reconos_thread_setbitstream(struct reconos_thread *rt,
                                  char **bitstreams,
                                  int *bitstream_lengths);
+
+/*
+ * Assigns the allowed hardware slots the thread can be exectued in.
+ *
+ *   rt                    - pointer to the ReconOS thread
+ *   allowed_slotids       - array of allowed slot ids
+ *   allowed_slotids_count - number of allowed slots
+ */
+void reconos_thread_setallowedhwslots(struct reconos_thread *rt,
+                                      int *allowed_slotids,
+                                      size_t allowed_slotids_count);
 
 /*
  * Sets the main method of the software thread. When createing the

@@ -131,8 +131,10 @@ void *swt_idle(void *data) {
 
 <<generate for THREADS>>
 
-<<=generate for HasHw=>>
 struct reconos_resource *resources_<<Name>>[] = {<<Resources>>};
+
+<<=generate for HasHw=>>
+int allowed_hwslots_<<Name>>[] = {<<Slots>>};
 
 /*
  * @see header
@@ -153,6 +155,7 @@ struct reconos_thread *reconos_thread_createi_hwt_<<Name>>(void *init) {
 	reconos_thread_init(rt, "<<Name>>", 0);
 	reconos_thread_setinitdata(rt, init);
 	reconos_thread_setresourcepointers(rt, resources_<<Name>>, <<ResourceCount>>);
+	reconos_thread_setallowedhwslots(rt, allowed_hwslots_<<Name>>, <<SlotCount>>);
 	reconos_thread_create(rt, RECONOS_THREAD_MODE_HW);
 
 	return rt;

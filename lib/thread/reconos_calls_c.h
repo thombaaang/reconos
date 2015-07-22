@@ -220,7 +220,7 @@ static inline int _PIPE_READ(struct reconos_resource *res,
  * specified by reconos_hwt_setinitdata.
  */
 #define GET_INIT_DATA()\
-	data
+	__rt->init_data
 
 /*
  * Reads several words from the main memory into the local ram.

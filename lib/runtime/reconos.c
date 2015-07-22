@@ -94,6 +94,8 @@ void reconos_thread_init(struct reconos_thread *rt,
 
 	rt->bitstreams = NULL;
 	rt->bitstream_lengths = NULL;
+	rt->allowed_hwslots = NULL;
+	rt->allowed_hwslots_count = 0;
 }
 
 /*
@@ -145,6 +147,25 @@ void reconos_thread_setbitstream(struct reconos_thread *rt,
 /*
  * @see header
  */
+void reconos_thread_setallowedhwslots(struct reconos_thread *rt,
+                                      int *allowed_slotids,
+                                      size_t allowed_slotids_count) {
+	int i;
+
+	rt->allowed_hwslots = (struct hwslot **)malloc(sizeof(struct hwslot *) * allowed_slotids_count);
+	if (!rt->allowed_hwslots) {
+		panic("[reconos-core] ERROR: failed to allocate memory for allowed slots");
+	}
+	rt->allowed_hwslots_count = allowed_slotids_count;
+
+	for (i = 0; i < allowed_slotids_count; i++) {
+		rt->allowed_hwslots[i] = &_hwslots[allowed_slotids[i]];
+	}
+}
+
+/*
+ * @see header
+ */
 void reconos_thread_setswentry(struct reconos_thread *rt,
                                void *(*swentry)(void *data)) {
 	rt->swentry = swentry;
@@ -160,7 +181,7 @@ void reconos_thread_create(struct reconos_thread *rt, int mode) {
 
 	switch (mode) {
 		case RECONOS_THREAD_MODE_SW:
-			rt->swslot = swslot_findfree();
+			rt->swslot = swslot_findfree(rt);
 			if (!rt->swslot) {
 				whine("[reconos-core] ERROR: no free software slot found");
 				return;
@@ -170,7 +191,7 @@ void reconos_thread_create(struct reconos_thread *rt, int mode) {
 			break;
 
 		case RECONOS_THREAD_MODE_HW:
-			rt->hwslot = hwslot_findfree();
+			rt->hwslot = hwslot_findfree(rt);
 			if (!rt->hwslot) {
 				whine("[reconos-core] ERROR: no free hardware slot found");
 				return;	
@@ -448,6 +469,9 @@ void hwslot_createthread(struct hwslot *slot,
                          struct reconos_thread *rt) {
 	uint32_t msg[3];
 
+	debug("[reconos-core] "
+	      "creating hardware thread %s in slot %d", rt->name, slot->id);
+
 	if (slot->rt) {
 		panic("[reconos-core] ERROR: a thread is already running");
 	}
@@ -556,12 +580,12 @@ void hwslot_jointhread(struct hwslot *slot) {
 /*
  * @see header
  */
-struct hwslot *hwslot_findfree() {
+struct hwslot *hwslot_findfree(struct reconos_thread *rt) {
 	int i;
 	struct hwslot *hwslot = NULL;
 
-	for (i = 0; i < RECONOS_NUM_HWSLOTS; i++) {
-		hwslot = &_hwslots[i];
+	for (i = 0; i < rt->allowed_hwslots_count; i++) {
+		hwslot = rt->allowed_hwslots[i];
 
 		if (!hwslot->rt)
 			break;
@@ -590,6 +614,9 @@ void swslot_init(struct swslot *slot, int id, int osif) {
  */
 void swslot_createthread(struct swslot *slot,
                          struct reconos_thread *rt) {
+	debug("[reconos-core] "
+	      "creating software thread %s in slot %d", rt->name, slot->id);
+
 	if (slot->rt) {
 		panic("[reconos-core] ERROR: a thread is already running");
 	}
@@ -602,7 +629,7 @@ void swslot_createthread(struct swslot *slot,
 /*
  * @see header
  */
-struct swslot *swslot_findfree() {
+struct swslot *swslot_findfree(struct reconos_thread *rt) {
 	int i;
 	struct swslot *swslot = NULL;
 
