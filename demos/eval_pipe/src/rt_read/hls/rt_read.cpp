@@ -8,11 +8,11 @@
 
 THREAD_ENTRY() {
 	THREAD_INIT();
-	RAM(uint32, LINE_LEN_WORD, line);
+	RAM(ap_uint<32>, LINE_LEN_WORD, line);
 
 	while (1) {
-		uint32 addr = MBOX_GET(read_cmd);
-		uint32 count = MBOX_GET(read_cmd);
+		ap_uint<32> addr = MBOX_GET(read_cmd);
+		ap_uint<32> count = MBOX_GET(read_cmd);
 
 		for (int i = 0; i < count; i++) {
 			MEM_READ(addr, line, LINE_LEN_BYTE);
