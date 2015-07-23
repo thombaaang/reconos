@@ -1087,7 +1087,7 @@ void *dt_delegate(void *arg) {
 #endif 
 
 		reconos_osif_read(slot->osif, recv, RECV_SIZE_BYTES);
-
+				
 		res_id = RECONOS_OSIF_DST(recv[0]);
 		if (res_id != 0xFF) {
 			for (i = 0; i < slot->rt->resource_count; i++) {
