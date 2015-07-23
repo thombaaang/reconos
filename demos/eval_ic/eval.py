@@ -2,6 +2,7 @@ import sys
 import re
 import reconos.utils.shutil2 as shutil2
 import Gnuplot
+import subprocess
 
 def _istwo(a):
 	return a == 1 or a == 8 or a == 16 or a == 24 or a == 32
@@ -34,7 +35,7 @@ with open("data_router.dat", "w") as file:
 print(data_router)
 
 gp = Gnuplot.Gnuplot()
-gp("set terminal pdf font 'Arial,11' size 7.3cm,4cm")
+gp("set terminal pdf font 'Arial,12' size 7.3cm,4cm linewidth 1")
 gp("set datafile separator '\t'")
 gp("set style data histograms")
 gp("set style histogram rowstacked")
@@ -48,6 +49,9 @@ gp("set xtics 100")
 gp("set yrange [0:900]")
 
 gp("set output 'eval_arbiter.pdf'")
-gp.plot("'data_arbiter.dat' using 2:xtic(1) lc rgb'black', '' using 3 lc rgb'white'")
+gp.plot("'data_arbiter.dat' using 2:xtic(1) linecolor rgb'black', '' using 3 linecolor rgb'white'")
 gp("set output 'eval_router.pdf'")
-gp.plot("'data_router.dat' using 2:xtic(1) lc rgb'black', '' using 3 lc rgb'white'")
+gp.plot("'data_router.dat' using 2:xtic(1) linecolor rgb'black', '' using 3 linecolor rgb'white'")
+
+#subprocess.call("epstopdf eval_arbiter.ps", shell=True)
+#subprocess.call("epstopdf eval_router.ps", shell=True)
