@@ -219,9 +219,13 @@ def _export_hw_thread_ise(prj, hwdir, link, thread):
 		dictionary["ID"] = thread.id;
 		dictionary["NAME"] = thread.name.lower();
 		srcs = shutil2.join(prj.dir, "src", "rt_" + thread.name.lower(), thread.hwsource)
-		dictionary["SOURCES"] = [srcs]
-		incls = shutil2.listfiles(srcs, True)
+		dictionary["SOURCES"] = shutil2.listfiles(srcs, True, "vhd", False)
+		incls = shutil2.listfiles(srcs, True, "vhd")
 		dictionary["INCLUDES"] = [{"File": shutil2.trimext(_)} for _ in incls]
+		dictionary["NETLISTSOURCES"] = shutil2.listfiles(srcs, True, "ngc", False)
+		ngc_incls = shutil2.listfiles(srcs, True, "ngc")
+		dictionary["NETLISTINCLUDES"] = [{"File": _} for _ in ngc_incls]
+		dictionary["USENETLIST"] = bool(ngc_incls)
 		dictionary["RESOURCES"] = []
 		dictionary["PORTS"] = thread.ports
 		for i, r in enumerate(thread.resources):
