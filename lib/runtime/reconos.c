@@ -329,7 +329,7 @@ void reconos_thread_swslot_write(struct reconos_thread *rt,
  *
  *   sig - signal
  */
-void exit_signal(int sig) {
+static void exit_signal(int sig) {
 	reconos_cleanup();
 
 	printf("[reconos-core] aborted\n");
@@ -342,7 +342,7 @@ void exit_signal(int sig) {
  *
  *   sig - signal
  */
-void delegate_signal(int sig) {
+static void delegate_signal(int sig) {
 	debug("[reconos-core] delegate received signal");
 }
 
