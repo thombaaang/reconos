@@ -274,9 +274,15 @@ void reconos_thread_join(struct reconos_thread *rt) {
  * @see header
  */
 void reconos_thread_signal(struct reconos_thread *rt) {
-#if 0
-	hwslot_setsignal(rt->hwslot, 1);
-#endif
+	switch (rt->state) {
+		case RECONOS_THREAD_STATE_RUNNING_SW:
+			swslot_setsignal(rt->swslot, 1);
+			break;
+
+		case RECONOS_THREAD_STATE_RUNNING_HW:
+			hwslot_setsignal(rt->hwslot, 1);
+			break;
+	}
 }
 
 /*
@@ -319,6 +325,13 @@ void reconos_thread_swslot_write(struct reconos_thread *rt,
 	}
 
 	reconos_osif_write(rt->swslot->osif, buf, count * sizeof(uint32_t));
+}
+
+/*
+ * @see header
+ */
+int reconos_thread_swslot_signal(struct reconos_thread *rt) {
+	return rt->swslot->sig;
 }
 
 
@@ -455,6 +468,8 @@ void hwslot_init(struct hwslot *slot, int id, int osif) {
 	slot->rt = NULL;
 
 	slot->dt = 0;
+
+	slot->sig = 0;
 #if 0
 	slot->dt_state = DELEGATE_STATE_STOPPED;
 	slot->dt_flags = 0;
@@ -509,6 +524,7 @@ void hwslot_setreset(struct hwslot *slot, int reset) {
  * @see header
  */
 void hwslot_setsignal(struct hwslot *slot, int sig) {
+	slot->sig = 1;
 	reconos_proc_control_hwt_signal(_proc_control, slot->id, sig);
 }
 
@@ -607,6 +623,8 @@ void swslot_init(struct swslot *slot, int id, int osif) {
 	slot->rt = NULL;
 
 	slot->thread = 0;
+
+	slot->sig = 0;
 }
 
 /*
@@ -624,7 +642,14 @@ void swslot_createthread(struct swslot *slot,
 	slot->rt = rt;
 
 	pthread_create(&slot->thread, NULL, rt->swentry, rt);
-} 
+}
+
+/*
+ * @see header
+ */
+void swslot_setsignal(struct swslot *slot, int sig) {
+	slot->sig = sig;
+}
 
 /*
  * @see header
@@ -1164,6 +1189,15 @@ void *dt_delegate(void *arg) {
 				reconos_osif_write(slot->osif, send, (send_count + 1) * sizeof(uint32_t));
 				debug("[reconos-rt-%d] "
 				      "DEBUG: executed get_init_data (0x%08x)", slot->id, (uint32_t)slot->rt->init_data);
+				break;
+			}
+
+			case OSIF_CMD_THREAD_EXIT: {
+				debug("[reconos-rt-%d] "
+				      "DEBUG: exiting ...", slot->id);
+				hwslot_reset(slot);
+				pthread_exit(0);
+
 				break;
 			}
 

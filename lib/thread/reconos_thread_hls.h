@@ -52,7 +52,8 @@
  */
 #define THREAD_ENTRY(...) void rt_imp(<<generate for MEM>>hls::stream<ap_uint<32> > memif_hwt2mem,\
                                       hls::stream<ap_uint<32> > memif_mem2hwt,\
-                                      <<end generate>>hls::stream<ap_uint<32> > osif_sw2hw,\
+                                      <<end generate>>hls::stream<bool> sig,\
+                                      hls::stream<ap_uint<32> > osif_sw2hw,\
                                       hls::stream<ap_uint<32> > osif_hw2sw __VA_ARGS__)
 
 /*
@@ -68,8 +69,14 @@
  * Terminates the current ReconOS thread.
  */
 #define THREAD_EXIT()\
-	stream_write((ap_uint<8>(<<ID|0x{:02x}>>), ap_uint<8>(0xFF), ap_uint<16>(0x0001))),\
-	stream_write(osif_hw2sw, OSIF_CMD_THREAD_EXIT),\
-	while(1);
+	stream_write(osif_hw2sw, (__run_id, ap_uint<8>(0xFF), ap_uint<16>(0x0001)));\
+	stream_write(osif_hw2sw, OSIF_CMD_THREAD_EXIT);\
+	while(1)
+
+/*
+ * Reads the signal value.
+ */
+#define THREAD_SIGNAL()\
+	!sig.empty()
 
 #endif /* RECONOS_THREAD_H */

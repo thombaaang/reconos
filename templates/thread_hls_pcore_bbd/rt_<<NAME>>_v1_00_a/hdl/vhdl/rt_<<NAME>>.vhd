@@ -55,9 +55,13 @@ architecture implementation of rt_<<NAME>> is
 
 			osif_hw2sw_V_V_din     : out std_logic_vector (31 downto 0);
 			osif_hw2sw_V_V_full_n  : in std_logic;
-			osif_hw2sw_V_V_write   : out std_logic
+			osif_hw2sw_V_V_write   : out std_logic;
+
+			sig_V_dout    : in std_logic;
+			sig_V_empty_n : in std_logic;
+			sig_V_read    : out std_logic
 		);
-  	end component;
+	end component;
 
 	signal osif_sw2hw_v_v_dout    : std_logic_vector(31 downto 0);
 	signal osif_sw2hw_v_v_empty_n : std_logic;
@@ -137,6 +141,10 @@ begin
 
 			osif_hw2sw_V_V_din     => osif_hw2sw_v_v_din,
 			osif_hw2sw_V_V_full_n  => osif_hw2sw_v_v_full_n,
-			osif_hw2sw_V_V_write   => osif_hw2sw_v_v_write
+			osif_hw2sw_V_V_write   => osif_hw2sw_v_v_write,
+
+			sig_V_dout    => HWT_Signal,
+			sig_V_empty_n => HWT_Signal,
+			sig_V_read    => open
 	);	
 end architecture;

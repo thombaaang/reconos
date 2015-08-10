@@ -65,4 +65,10 @@ extern struct reconos_resource *<<NameLower>>;
 #define THREAD_EXIT()\
 	pthread_exit(0);
 
+/*
+ * Reads the signal value.
+ */
+#define THREAD_SIGNAL()\
+	reconos_thread_swslot_signal(__rt)
+
 #endif /* RECONOS_THREAD_H */

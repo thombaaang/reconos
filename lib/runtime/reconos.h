@@ -268,6 +268,16 @@ size_t reconos_thread_swslot_read(struct reconos_thread *rt,
 void reconos_thread_swslot_write(struct reconos_thread *rt,
                                  uint32_t *buf, size_t count);
 
+/*
+ * Reads the signal state.
+ *
+ *   rt - pointer to the ReconOS thread
+ *
+ *   @returns signal state
+ */
+int reconos_thread_swslot_signal(struct reconos_thread *rt);
+
+
 /* == General functions ================================================ */
 
 /*

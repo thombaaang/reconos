@@ -70,8 +70,11 @@ void *proc_pgfhandler(void *arg);
  *   id - global id as used in the hardware design
  *   rt - pointer to the currently executing thread
  *
- *   osif     - file descriptor of the osif
- *   dt       - reference to the delegate thread
+ *   osif - file descriptor of the osif
+ *   dt   - reference to the delegate thread
+ *
+ *   sig - signal of slot
+ *
  *   dt_state - state of the delegate thread
  *   dt_flags - flags to the delegate thread
  *   dt_exit  - semaphore for synchronizing with the delegate on exit
@@ -82,6 +85,8 @@ struct hwslot {
 
 	int osif;
 	pthread_t dt;
+
+	int sig;
 #if 0
 	int dt_state;
 	int dt_flags;
@@ -181,6 +186,8 @@ struct hwslot *hwslot_findfree();
  *
  *   osif      - file descriptor of the osif
  *   pthread_t - reference to thread
+ *
+ *   sig - signal of slot
  */
 struct swslot {
 	int id;
@@ -188,6 +195,8 @@ struct swslot {
 
 	int osif;
 	pthread_t thread;
+
+	int sig;
 };
 
 /*
@@ -200,11 +209,19 @@ void swslot_init(struct swslot *slot, int id, int osif);
 /*
  * Executes the given ReconOS thread in the slot by sarting a pthread.
  *
- *   slot - pointer to the hardware slot
+ *   slot - pointer to the software slot
  *   rt   - pointer to the ReconOS thread
  */
 void swslot_createthread(struct swslot *slot,
                          struct reconos_thread *rt);
+
+/*
+ * Sets the signal of the slot.
+ *
+ *   slot  - pointer to the software slot
+ *   reset - zero or one to set the signal
+ */
+void swslot_setsignal(struct swslot *slot, int sig);
 
 /*
  * Finds a free slot from all available slots.
