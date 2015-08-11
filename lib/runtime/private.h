@@ -160,8 +160,7 @@ void hwslot_resumethread(struct hwslot *slot,
                          struct reconos_thread *rt);
 
 /*
- * Waits for the termination of the running thread and resets the thread
- * afterwards.
+ * Waits for the termination of the running thread.
  *
  *   slot - pointer to the hardware slot
  */
@@ -230,6 +229,13 @@ void swslot_setsignal(struct swslot *slot, int sig);
  *
  */
 struct swslot *swslot_findfree();
+
+/*
+ * Waits for the termination of the running thread.
+ *
+ *   slot - pointer to the software slot
+ */
+void swslot_jointhread(struct swslot *slot);
 
 
 /* == ReconOS delegate ================================================= */

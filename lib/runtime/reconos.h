@@ -277,6 +277,13 @@ void reconos_thread_swslot_write(struct reconos_thread *rt,
  */
 int reconos_thread_swslot_signal(struct reconos_thread *rt);
 
+/*
+ * Cleanups the thread before exiting.
+ *
+ *   rt - pointer to the ReconOS thread
+ */
+void reconos_thread_swslot_cleanup(struct reconos_thread *rt);
+
 
 /* == General functions ================================================ */
 

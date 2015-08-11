@@ -265,9 +265,15 @@ void reconos_thread_resume(struct reconos_thread *rt, int slot) {
  * @see header
  */
 void reconos_thread_join(struct reconos_thread *rt) {
-#if 0
-	hwslot_jointhread(rt->hwslot);
-#endif
+	switch (rt->state) {
+		case RECONOS_THREAD_STATE_RUNNING_SW:
+			swslot_jointhread(rt->swslot);
+			break;
+
+		case RECONOS_THREAD_STATE_RUNNING_HW:
+			hwslot_jointhread(rt->hwslot);
+			break;
+	}
 }
 
 /*
@@ -332,6 +338,15 @@ void reconos_thread_swslot_write(struct reconos_thread *rt,
  */
 int reconos_thread_swslot_signal(struct reconos_thread *rt) {
 	return rt->swslot->sig;
+}
+
+/*
+ * @see header
+ */
+void reconos_thread_swslot_cleanup(struct reconos_thread *rt) {
+	rt->state = RECONOS_THREAD_STATE_STOPED;
+	rt->swslot->sig = 0;
+	rt->swslot->rt = NULL;
 }
 
 
@@ -511,6 +526,7 @@ void hwslot_reset(struct hwslot *slot) {
 	reconos_proc_control_hwt_reset(_proc_control, slot->id, 1);
 	reconos_proc_control_hwt_signal(_proc_control, slot->id, 0);
 	reconos_proc_control_hwt_reset(_proc_control, slot->id, 0);
+	slot->sig = 0;
 }
 
 /*
@@ -579,23 +595,6 @@ void hwslot_resumethread(struct hwslot *slot,
 /*
  * @see header
  */
-void hwslot_jointhread(struct hwslot *slot) {
-#if 0
-	if (!slot->rt) {
-		panic("[reconos-core] ERROR: no thread running\n");
-	}
-
-	sem_wait(&slot->dt_exit);
-
-	reconos_proc_control_hwt_reset(_proc_control, slot->id, 1);
-	reconos_proc_control_hwt_signal(_proc_control, slot->id, 0);
-	slot->rt = NULL;
-#endif
-}
-
-/*
- * @see header
- */
 struct hwslot *hwslot_findfree(struct reconos_thread *rt) {
 	int i;
 	struct hwslot *hwslot = NULL;
@@ -607,7 +606,19 @@ struct hwslot *hwslot_findfree(struct reconos_thread *rt) {
 			break;
 	}
 
+	if (i == rt->allowed_hwslots_count) {
+		panic("[reconos-core] ERROR: No free slot find");
+	}
+
 	return hwslot;
+}
+
+/*
+ * @see header
+ */
+void hwslot_jointhread(struct hwslot *slot) {
+	pthread_join(slot->dt, NULL);
+	slot->dt = 0;
 }
 
 
@@ -665,7 +676,19 @@ struct swslot *swslot_findfree(struct reconos_thread *rt) {
 			break;
 	}
 
+	if (i == RECONOS_NUM_SWSLOTS) {
+		panic("[reconos-core] ERROR: No free slot find");
+	}
+
 	return swslot;
+}
+
+/*
+ * @see header
+ */
+void swslot_jointhread(struct swslot *slot) {
+	pthread_join(slot->thread, NULL);
+	slot->thread = 0;
 }
 
 
@@ -1194,8 +1217,10 @@ void *dt_delegate(void *arg) {
 
 			case OSIF_CMD_THREAD_EXIT: {
 				debug("[reconos-rt-%d] "
-				      "DEBUG: exiting ...", slot->id);
+				      "DEBUG: exiting %s ...", slot->id, slot->rt->name);
 				hwslot_reset(slot);
+				slot->rt->state = RECONOS_THREAD_STATE_STOPED;
+				slot->rt = NULL;
 				pthread_exit(0);
 
 				break;

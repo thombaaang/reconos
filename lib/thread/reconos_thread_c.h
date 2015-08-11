@@ -63,7 +63,8 @@ extern struct reconos_resource *<<NameLower>>;
  * Terminates the current ReconOS thread.
  */
 #define THREAD_EXIT()\
-	pthread_exit(0);
+	reconos_thread_swslot_cleanup(__rt);\
+	pthread_exit(0)
 
 /*
  * Reads the signal value.
