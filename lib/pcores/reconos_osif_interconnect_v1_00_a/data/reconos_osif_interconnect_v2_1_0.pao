@@ -7,3 +7,5 @@ lib reconos_osif_interconnect_v1_00_a router_sw vhdl
 lib reconos_osif_interconnect_v1_00_a arbiter_slot vhdl
 lib reconos_osif_interconnect_v1_00_a arbiter_res vhdl
 lib reconos_osif_interconnect_v1_00_a arbiter_sw vhdl
+lib reconos_osif_interconnect_v1_00_a blocking vhdl
+lib reconos_osif_interconnect_v1_00_a waiting vhdl

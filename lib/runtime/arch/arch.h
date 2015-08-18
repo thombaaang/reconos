@@ -47,6 +47,9 @@ extern void reconos_proc_control_sys_reset(int fd);
 extern void reconos_proc_control_hwt_reset(int fd, int num, int reset);
 extern void reconos_proc_control_hwt_signal(int fd, int num, int signal);
 extern void reconos_proc_control_cache_flush(int fd);
+extern void reconos_proc_control_set_ic_sig(int fd, int sig);
+extern int reconos_proc_control_get_ic_rdy(int fd);
+extern void reconos_proc_control_set_ic_rst(int fd, int rst);
 extern void reconos_proc_control_close(int fd);
 
 
@@ -59,7 +62,7 @@ extern void reconos_clock_close(int fd);
 
 /* == Reconfiguration related functions ================================= */
 
-extern int load_partial_bitstream(uint32_t *bitstream, unsigned int bitstream_length);
+extern int load_bitstream(uint32_t *bitstream, unsigned int bitstream_length, int partial);
 
 
 /* == Initialization function =========================================== */

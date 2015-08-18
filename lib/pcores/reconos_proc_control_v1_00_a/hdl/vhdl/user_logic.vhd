@@ -25,9 +25,10 @@
 --                   Reg4: TLB misses - Read only
 --                   # resets
 --                   Reg5: ReconOS reset (reset everything) - Write only
---                   Reg6: HWT reset (multiple registers) - Write only
+--                   Reg6: Interconnect signals
+--                   Reg7: HWT reset (multiple registers) - Write only
 --                         | x , x-1, ... | x-32 , x-33, ... 0 |
---                   Reg7: HWT signal - Write only
+--                   Reg8: HWT signal - Write only
 --                         | x , x-1, ... | x-32 , x-33, ... 0 |
 --
 --                   Page fault handling works the following:
@@ -76,6 +77,11 @@ entity user_logic is
 		MMU_Tlb_Hits     : in  std_logic_vector(31 downto 0);
 		MMU_Tlb_Misses   : in  std_logic_vector(31 downto 0);
 
+		-- Interconnect signals
+		IC_Sig : out std_logic;
+		IC_Rdy : in  std_logic;
+		IC_Rst : out std_logic;
+
 		-- Bus protocol ports
 		Bus2IP_Clk       : in  std_logic;
 		Bus2IP_Resetn    : in  std_logic;
@@ -109,6 +115,7 @@ architecture imp of user_logic is
 	signal sys_reset           : std_logic;
 	signal hwt_reset           : std_logic_vector(C_NUM_HWTS - 1 downto 0);
 	signal hwt_signal          : std_logic_vector(C_NUM_HWTS - 1 downto 0);
+	signal ic_reg              : std_logic_vector(31 downto 0);
 
 	signal hwt_reset_reg       : std_logic_vector(NUM_HWT_REGS * C_SLV_DWIDTH - 1 downto 0);
 	signal hwt_signal_reg      : std_logic_vector(NUM_HWT_REGS * C_SLV_DWIDTH - 1 downto 0);
@@ -154,6 +161,10 @@ begin
 	hwt_signal <= hwt_signal_reg(C_NUM_HWTS - 1 downto 0);
 
 	MMU_Pgd <= pgd;
+
+	IC_Sig    <= ic_reg(0);
+	ic_reg(2) <= IC_Rdy;
+	IC_Rst    <= ic_reg(1);
 
 
 	-- page fault handlig (for details see description above)
@@ -265,14 +276,30 @@ begin
 	end process pgd_proc;
 
 
+	ic_proc : process(clk,rst) is
+	begin
+		if rst = '1' or sys_reset = '1' then
+			ic_reg(1 downto 0) <= (others => '0');
+		else
+			if rising_edge(clk) then
+				if slv_reg_write_sel(C_NUM_REG - 7) = '1' then
+					ic_reg(1 downto 0) <= Bus2IP_Data(1 downto 0);
+				end if;
+			end if;
+		end if;
+	end process ic_proc;
+
+
 	bus_reg_read_proc : process(slv_reg_read_sel) is
 	begin
-		case slv_reg_read_sel(C_NUM_REG - 1 downto C_NUM_REG - 6) is
-			when "100000" => slv_ip2bus_data <= CONV_STD_LOGIC_VECTOR(C_NUM_HWTS, C_SLV_DWIDTH);
-			when "010000" => slv_ip2bus_data <= pgd;
-			when "001000" => slv_ip2bus_data <= fault_addr;
-			when "000100" => slv_ip2bus_data <= tlb_hits;
-			when "000010" => slv_ip2bus_data <= tlb_misses;
+		case slv_reg_read_sel(C_NUM_REG - 1 downto C_NUM_REG - 7) is
+			when "1000000" => slv_ip2bus_data <= CONV_STD_LOGIC_VECTOR(C_NUM_HWTS, C_SLV_DWIDTH);
+			when "0100000" => slv_ip2bus_data <= pgd;
+			when "0010000" => slv_ip2bus_data <= fault_addr;
+			when "0001000" => slv_ip2bus_data <= tlb_hits;
+			when "0000100" => slv_ip2bus_data <= tlb_misses;
+			when "0000010" => slv_ip2bus_data <= (others => '0');
+			when "0000001" => slv_ip2bus_data <= ic_reg;
 			when others => slv_ip2bus_data <= (others => '0');
 		end case;
 	end process bus_reg_read_proc;

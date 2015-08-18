@@ -70,7 +70,7 @@ entity reconos_osif_interconnect is
 		<<generate for SLOTS>>
 		OSIF_Ic2Hw_<<Id>>_Data  : out std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
 		OSIF_Ic2Hw_<<Id>>_Empty : out std_logic;
-		OSIF_Ic2Hw_<<Id>>_RE    : in std_logic;
+		OSIF_Ic2Hw_<<Id>>_RE    : in  std_logic;
 		<<end generate>>
 
 		<<generate for RESOURCES(Mode == "hw")>>
@@ -94,6 +94,10 @@ entity reconos_osif_interconnect is
 		OSIF_Ic2Sw_RE       : in  std_logic;
 		OSIF_Ic2Sw_Has_Data : out std_logic;
 
+		IC_Sig : in  std_logic := '0';
+		IC_Rdy : out std_logic;
+		IC_Rst : in  std_logic := '0';
+
 		SYS_Clk : in std_logic;
 		SYS_Rst : in std_logic
 	);
@@ -101,6 +105,8 @@ end entity reconos_osif_interconnect;
 
 
 architecture imp of reconos_osif_interconnect is
+	signal rst : std_logic;
+
 	--
 	-- Internal interconnect signals
 	--
@@ -161,7 +167,7 @@ architecture imp of reconos_osif_interconnect is
 	--
 	-- Internal signal to add registers for multiplexed outputs
 	--
-	--   ic2hw_  - fifo signals for slot
+	--   ic2hw_  - fifo signals for slots
 	--   ic2res_ - fifo signals for resources
 	--   ic2sw_  - fifo signals for software
 	--
@@ -186,7 +192,67 @@ architecture imp of reconos_osif_interconnect is
 	signal ic2sw_empty_n : std_logic;
 	signal ic2sw_re      : std_logic;
 	signal ic2sw_re_n    : std_logic;
+
+	--
+	-- Internal signals to add blocking and waiting components.
+	--   hw2ic_/ic2hw   - fifo signals for slots
+	--   res2ic_/ic2res - fifo signals for resources
+	--   sw2ic_/ic2sw   - fifo signals for software
+	--
+	<<generate for SLOTS>>
+	signal bb_hw2ic_<<SlotId>>_data  : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
+	signal bb_hw2ic_<<SlotId>>_full  : std_logic;
+	signal bb_hw2ic_<<SlotId>>_we    : std_logic;
+	<<end generate>>
+
+	<<generate for SLOTS>>
+	signal bb_ic2hw_<<SlotId>>_data  : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
+	signal bb_ic2hw_<<SlotId>>_empty : std_logic;
+	signal bb_ic2hw_<<SlotId>>_re    : std_logic;
+	<<end generate>>
+
+	<<generate for RESOURCES(Mode == "hw")>>
+	signal bb_res2ic_<<ResId>>_data  : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
+	signal bb_res2ic_<<ResId>>_full  : std_logic;
+	signal bb_res2ic_<<ResId>>_we    : std_logic;
+	<<end generate>>
+
+	<<generate for RESOURCES(Mode == "hw")>>
+	signal bb_ic2res_<<ResId>>_data  : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
+	signal bb_ic2res_<<ResId>>_empty : std_logic;
+	signal bb_ic2res_<<ResId>>_re    : std_logic;
+	<<end generate>>
+
+	signal bb_sw2ic_data     : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
+	signal bb_sw2ic_full     : std_logic;
+	signal bb_sw2ic_we       : std_logic;
+
+	signal bb_ic2sw_data     : std_logic_vector(C_OSIF_DATA_WIDTH - 1 downto 0);
+	signal bb_ic2sw_empty    : std_logic;
+	signal bb_ic2sw_re       : std_logic;
+	signal bb_ic2sw_has_data : std_logic;
+
+	--
+	-- Internal signals for controling blocking and waiting components
+	--
+	<<generate for SLOTS>>
+	signal bb_slot<<SlotId>>_blocking_sig : std_logic;
+	signal bb_slot<<SlotId>>_blocking_rdy : std_logic;
+	signal bb_slot<<SlotId>>_waiting_rdy  : std_logic;
+	<<end generate>>
+
+	<<generate for RESOURCES(Mode == "hw")>>
+	signal bb_res<<ResId>>_blocking_sig : std_logic;
+	signal bb_res<<ResId>>_blocking_rdy : std_logic;
+	signal bb_res<<ResId>>_waiting_rdy  : std_logic;
+	<<end generate>>
+
+	signal bb_sw_blocking_sig : std_logic;
+	signal bb_sw_blocking_rdy : std_logic;
+	signal bb_sw_waiting_rdy  : std_logic;
 begin
+
+	rst <= SYS_Rst or IC_Rst;
 
 	-- == Added registers for output signals ==============================
 
@@ -199,16 +265,16 @@ begin
 			C_FIFO_ADDR_WIDTH => 1
 		)
 		port map (
-			FIFO_S_Data  => OSIF_Ic2Hw_<<Id>>_Data,
-			FIFO_S_Empty => OSIF_Ic2Hw_<<Id>>_Empty,
-			FIFO_S_RE    => OSIF_Ic2Hw_<<Id>>_RE,
+			FIFO_S_Data  => bb_ic2hw_<<SlotId>>_data,
+			FIFO_S_Empty => bb_ic2hw_<<SlotId>>_empty,
+			FIFO_S_RE    => bb_ic2hw_<<SlotId>>_re,
 
 			FIFO_M_Data => ic2hw_<<SlotId>>_data,
 			FIFO_M_Full => ic2hw_<<SlotId>>_re_n,
 			FIFO_M_WE   => ic2hw_<<SlotId>>_empty_n,
 
 			FIFO_Clk => SYS_Clk,
-			FIFO_Rst => SYS_Rst
+			FIFO_Rst => rst
 		);
 	<<end generate>>
 
@@ -221,16 +287,16 @@ begin
 			C_FIFO_ADDR_WIDTH => 1
 		)
 		port map (
-			FIFO_S_Data  => OSIF_Ic2Res_<<Id>>_Data,
-			FIFO_S_Empty => OSIF_Ic2Res_<<Id>>_Empty,
-			FIFO_S_RE    => OSIF_Ic2Res_<<Id>>_RE,
+			FIFO_S_Data  => bb_ic2res_<<ResId>>_data,
+			FIFO_S_Empty => bb_ic2res_<<ResId>>_empty,
+			FIFO_S_RE    => bb_ic2res_<<ResId>>_re,
 
 			FIFO_M_Data => ic2res_<<ResId>>_data,
 			FIFO_M_Full => ic2res_<<ResId>>_re_n,
 			FIFO_M_WE   => ic2res_<<ResId>>_empty_n,
 
 			FIFO_Clk => SYS_Clk,
-			FIFO_Rst => SYS_Rst
+			FIFO_Rst => rst
 		);
 	<<end generate>>
 
@@ -242,17 +308,17 @@ begin
 			C_FIFO_ADDR_WIDTH => 1
 		)
 		port map (
-			FIFO_S_Data     => OSIF_Ic2Sw_Data,
-			FIFO_S_Empty    => OSIF_Ic2Sw_Empty,
-			FIFO_S_RE       => OSIF_Ic2Sw_RE,
+			FIFO_S_Data     => bb_ic2sw_data,
+			FIFO_S_Empty    => bb_ic2sw_empty,
+			FIFO_S_RE       => bb_ic2sw_re,
 
 			FIFO_M_Data => ic2sw_data,
 			FIFO_M_Full => ic2sw_re_n,
 			FIFO_M_WE   => ic2sw_empty_n,
 
 			FIFO_Clk      => SYS_Clk,
-			FIFO_Rst      => SYS_Rst,
-			FIFO_Has_Data => OSIF_Ic2Sw_Has_Data
+			FIFO_Rst      => rst,
+			FIFO_Has_Data => bb_ic2sw_has_data
 		);
 
 
@@ -269,12 +335,12 @@ begin
 			FIFO_S_Empty => fifoin_slot<<SlotId>>_empty,
 			FIFO_S_RE    => fifoin_slot<<SlotId>>_re,
 
-			FIFO_M_Data => OSIF_Hw2Ic_<<SlotId>>_Data,
-			FIFO_M_Full => OSIF_Hw2Ic_<<SlotId>>_Full,
-			FIFO_M_WE   => OSIF_Hw2Ic_<<SlotId>>_WE,
+			FIFO_M_Data => bb_hw2ic_<<SlotId>>_data,
+			FIFO_M_Full => bb_hw2ic_<<SlotId>>_full,
+			FIFO_M_WE   => bb_hw2ic_<<SlotId>>_we,
 
 			FIFO_Clk => SYS_Clk,
-			FIFO_Rst => SYS_Rst
+			FIFO_Rst => rst
 		);
 	<<end generate>>
 
@@ -289,12 +355,12 @@ begin
 			FIFO_S_Empty => fifoin_res<<ResId>>_empty,
 			FIFO_S_RE    => fifoin_res<<ResId>>_re,
 
-			FIFO_M_Data => OSIF_Res2Ic_<<ResId>>_Data,
-			FIFO_M_Full => OSIF_Res2Ic_<<ResId>>_Full,
-			FIFO_M_WE   => OSIF_Res2Ic_<<ResId>>_WE,
+			FIFO_M_Data => bb_res2ic_<<ResId>>_data,
+			FIFO_M_Full => bb_res2ic_<<ResId>>_full,
+			FIFO_M_WE   => bb_res2ic_<<ResId>>_we,
 
 			FIFO_Clk => SYS_Clk,
-			FIFO_Rst => SYS_Rst
+			FIFO_Rst => rst
 		);
 	<<end generate>>
 
@@ -308,12 +374,12 @@ begin
 			FIFO_S_Empty => fifoin_sw_empty,
 			FIFO_S_RE    => fifoin_sw_re,
 
-			FIFO_M_Data => OSIF_Sw2Ic_Data,
-			FIFO_M_Full => OSIF_Sw2Ic_Full,
-			FIFO_M_WE   => OSIF_Sw2Ic_WE,
+			FIFO_M_Data => bb_sw2ic_data,
+			FIFO_M_Full => bb_sw2ic_full,
+			FIFO_M_WE   => bb_sw2ic_we,
 
 			FIFO_Clk => SYS_Clk,
-			FIFO_Rst => SYS_Rst
+			FIFO_Rst => rst
 		);
 
 
@@ -340,7 +406,7 @@ begin
 			<<end generate>>
 
 			SYS_Clk => SYS_Clk,
-			SYS_Rst => SYS_Rst
+			SYS_Rst => rst
 		);
 
 	icout_sw : entity reconos_osif_interconnect_v1_00_a.arbiter_icout_sw
@@ -364,7 +430,7 @@ begin
 			<<end generate>>
 
 			SYS_Clk => SYS_Clk,
-			SYS_Rst => SYS_Rst
+			SYS_Rst => rst
 		);
 
 	<<generate for SLOTS>>
@@ -387,7 +453,7 @@ begin
 			FIFO_Sw_RE              => hw<<SlotId>>2sw_re,
 
 			SYS_Clk => SYS_Clk,
-			SYS_Rst => SYS_Rst
+			SYS_Rst => rst
 		);
 
 	icout_slot<<Id>> : entity reconos_osif_interconnect_v1_00_a.arbiter_icout_slot<<Id>>
@@ -409,7 +475,7 @@ begin
 			FIFO_Sw_RE              => sw2hw<<SlotId>>_re,
 
 			SYS_Clk => SYS_Clk,
-			SYS_Rst => SYS_Rst
+			SYS_Rst => rst
 		);
 	<<end generate>>
 
@@ -433,7 +499,7 @@ begin
 			FIFO_Sw_RE              => res<<ResId>>2sw_re,
 
 			SYS_Clk => SYS_Clk,
-			SYS_Rst => SYS_Rst
+			SYS_Rst => rst
 		);
 
 	icout_res<<Id>> : entity reconos_osif_interconnect_v1_00_a.arbiter_icout_res<<Id>>
@@ -455,8 +521,153 @@ begin
 			FIFO_Sw_RE              => sw2res<<ResId>>_re,
 
 			SYS_Clk => SYS_Clk,
-			SYS_Rst => SYS_Rst
+			SYS_Rst => rst
 		);
 	<<end generate>>
+
+	<<generate for SLOTS>>
+	blocking_slot<<Id>> : entity reconos_osif_interconnect_v1_00_a.blocking
+		generic map (
+			C_OSIF_DATA_WIDTH => C_OSIF_DATA_WIDTH
+		)
+		port map (
+			FIFO_In_Data => OSIF_Hw2Ic_<<Id>>_Data,
+			FIFO_In_Full => OSIF_Hw2Ic_<<Id>>_Full,
+			FIFO_In_WE   => OSIF_Hw2Ic_<<Id>>_WE,
+
+			FIFO_Out_Data => bb_hw2ic_<<SlotId>>_data,
+			FIFO_Out_Full => bb_hw2ic_<<SlotId>>_full,
+			FIFO_Out_WE   => bb_hw2ic_<<SlotId>>_we,
+
+			BL_Sig => bb_slot<<SlotId>>_blocking_sig,
+			BL_Rdy => bb_slot<<SlotId>>_blocking_rdy,
+
+			SYS_Clk => SYS_Clk,
+			SYS_Rst => rst
+		);
+
+	waiting_slot<<Id>> : entity reconos_osif_interconnect_v1_00_a.waiting
+		generic map (
+			C_OSIF_DATA_WIDTH => C_OSIF_DATA_WIDTH
+		)
+		port map (
+			FIFO_In_Data  => bb_ic2hw_<<SlotId>>_data,
+			FIFO_In_Empty => bb_ic2hw_<<SlotId>>_empty,
+			FIFO_In_RE    => bb_ic2hw_<<SlotId>>_re,
+
+			FIFO_Out_Data  => OSIF_Ic2Hw_<<Id>>_Data,
+			FIFO_Out_Empty => OSIF_Ic2Hw_<<Id>>_Empty,
+			FIFO_Out_RE    => OSIF_Ic2Hw_<<Id>>_RE,
+
+			WA_Rdy => bb_slot<<SlotId>>_waiting_rdy,
+
+			SYS_Clk => SYS_Clk,
+			SYS_Rst => rst
+		);
+	<<end generate>>
+
+	<<generate for RESOURCES(Mode == "hw")>>
+	blocking_res<<Id>> : entity reconos_osif_interconnect_v1_00_a.blocking
+		generic map (
+			C_OSIF_DATA_WIDTH => C_OSIF_DATA_WIDTH
+		)
+		port map (
+			FIFO_In_Data => OSIF_Res2Ic_<<Id>>_Data,
+			FIFO_In_Full => OSIF_Res2Ic_<<Id>>_Full,
+			FIFO_In_WE   => OSIF_Res2Ic_<<Id>>_WE,
+
+			FIFO_Out_Data => bb_res2ic_<<ResId>>_data,
+			FIFO_Out_Full => bb_res2ic_<<ResId>>_full,
+			FIFO_Out_WE   => bb_res2ic_<<ResId>>_we,
+
+			BL_Sig => bb_res<<ResId>>_blocking_sig,
+			BL_Rdy => bb_res<<ResId>>_blocking_rdy,
+
+			SYS_Clk => SYS_Clk,
+			SYS_Rst => rst
+		);
+
+	waiting_res<<Id>> : entity reconos_osif_interconnect_v1_00_a.waiting
+		generic map (
+			C_OSIF_DATA_WIDTH => C_OSIF_DATA_WIDTH
+		)
+		port map (
+			FIFO_In_Data  => bb_ic2res_<<ResId>>_data,
+			FIFO_In_Empty => bb_ic2res_<<ResId>>_empty,
+			FIFO_In_RE    => bb_ic2res_<<ResId>>_re,
+
+			FIFO_Out_Data  => OSIF_Ic2Res_<<Id>>_Data,
+			FIFO_Out_Empty => OSIF_Ic2Res_<<Id>>_Empty,
+			FIFO_Out_RE    => OSIF_Ic2Res_<<Id>>_RE,
+
+			WA_Rdy => bb_res<<ResId>>_waiting_rdy,
+
+			SYS_Clk => SYS_Clk,
+			SYS_Rst => rst
+		);
+	<<end generate>>
+
+	blocking_sw : entity reconos_osif_interconnect_v1_00_a.blocking
+		generic map (
+			C_OSIF_DATA_WIDTH => C_OSIF_DATA_WIDTH
+		)
+		port map (
+			FIFO_In_Data => OSIF_Sw2Ic_Data,
+			FIFO_In_Full => OSIF_Sw2Ic_Full,
+			FIFO_In_WE   => OSIF_Sw2Ic_WE,
+
+			FIFO_Out_Data => bb_sw2ic_data,
+			FIFO_Out_Full => bb_sw2ic_full,
+			FIFO_Out_WE   => bb_sw2ic_we,
+
+			BL_Sig => bb_sw_blocking_sig,
+			BL_Rdy => bb_sw_blocking_rdy,
+
+			SYS_Clk => SYS_Clk,
+			SYS_Rst => rst
+		);
+
+	waiting_sw : entity reconos_osif_interconnect_v1_00_a.waiting
+		generic map (
+			C_OSIF_DATA_WIDTH => C_OSIF_DATA_WIDTH
+		)
+		port map (
+			FIFO_In_Data  => bb_ic2sw_data,
+			FIFO_In_Empty => bb_ic2sw_empty,
+			FIFO_In_RE    => bb_ic2sw_re,
+
+			FIFO_Out_Data  => OSIF_Ic2Sw_Data,
+			FIFO_Out_Empty => OSIF_Ic2Sw_Empty,
+			FIFO_Out_RE    => OSIF_Ic2Sw_RE,
+
+			WA_Rdy => bb_sw_waiting_rdy,
+
+			SYS_Clk => SYS_Clk,
+			SYS_Rst => rst
+		);
+
+	OSIF_Ic2Sw_Has_Data <= bb_ic2sw_has_data;
+
+	<<generate for SLOTS>>
+	bb_slot<<SlotId>>_blocking_sig <= IC_Sig;
+	<<end generate>>
+
+	<<generate for RESOURCES(Mode == "hw")>>
+	bb_res<<ResId>>_blocking_sig <= IC_Sig;
+	<<end generate>>
+
+	bb_sw_blocking_sig <= IC_Sig;
+
+	IC_Rdy <=
+		<<generate for SLOTS>>
+		bb_slot<<SlotId>>_blocking_rdy and
+		bb_slot<<SlotId>>_waiting_rdy and
+		<<end generate>>
+		<<generate for RESOURCES(Mode == "hw")>>
+		bb_res<<ResId>>_blocking_rdy and
+		bb_res<<ResId>>_waiting_rdy and
+		<<end generate>>
+		bb_sw_blocking_rdy and
+		bb_sw_waiting_rdy;
 
 end architecture imp;

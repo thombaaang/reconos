@@ -76,7 +76,8 @@
 #define TLB_HITS_REG           0x0C
 #define TLB_MISSES_REG         0x10
 #define SYS_RESET_REG          0x14
-#define HWT_RESET_REG(hwt)     (0x18 + HWT_REG_OFFSET(hwt) * 4)
+#define IC_REG                 0x18
+#define HWT_RESET_REG(hwt)     (0x1c + HWT_REG_OFFSET(hwt) * 4)
 #define HWT_SIGNAL_REG(hwt)    (HWT_RESET_REG(hwt) + DYNAMIC_REG_COUNT * 4)
 
 /*
@@ -110,6 +111,7 @@ struct proc_control_dev {
 	uint32_t page_fault_addr;
 	uint32_t *hwt_resets;
 	uint32_t *hwt_signals;
+	uint32_t ic_reg;
 
 	struct miscdevice mdev;
 
@@ -192,7 +194,7 @@ static long proc_control_ioctl(struct file *filp, unsigned int cmd,
                                unsigned long arg) {
 	struct proc_control_dev *dev;
 	uint32_t data;
-	int i, hwt;
+	int i, hwt, d;
 	unsigned long ret;
 
 	dev = (struct proc_control_dev *)filp->private_data;
@@ -319,6 +321,39 @@ static long proc_control_ioctl(struct file *filp, unsigned int cmd,
 			flush_cache();
 			break;
 
+		case RECONOS_PROC_CONTROL_SET_IC_SIG:
+			ret = copy_from_user(&d, (int *) arg, sizeof(int));
+
+			if (d) {
+				dev->ic_reg |= 0x00000001;
+				write_reg(dev, IC_REG, dev->ic_reg);
+			} else {
+				dev->ic_reg &= 0xfffffffe;
+				write_reg(dev, IC_REG, dev->ic_reg);
+			}
+
+			break;
+
+		case RECONOS_PROC_CONTROL_SET_IC_RST:
+			ret = copy_from_user(&d, (int *) arg, sizeof(int));
+
+			if (d) {
+				dev->ic_reg |= 0x00000002;
+				write_reg(dev, IC_REG, dev->ic_reg);
+			} else {
+				dev->ic_reg &= 0xfffffffd;
+				write_reg(dev, IC_REG, dev->ic_reg);
+			}
+
+			break;
+
+		case RECONOS_PROC_CONTROL_GET_IC_RDY:
+			data = (read_reg(dev, IC_REG) >> 2) & 0x00000001;
+
+			ret = copy_to_user((int *)arg, &data, sizeof(int));
+
+			break;
+
 		default:
 			return -EINVAL;
 	}
@@ -415,6 +450,7 @@ int proc_control_init(void) {
 	dev->mem_size = MEM_SIZE;
 	dev->irq = IRQ;
 	dev->page_fault = 0;
+	dev->ic_reg = 0;
 
 	// allocating reset-register
 	dev->hwt_resets = kcalloc(DYNAMIC_REG_COUNT, sizeof(uint32_t), GFP_KERNEL);

@@ -192,8 +192,8 @@ begin
 	FIFO_S_Data   <= ram(to_integer(rdptr));
 	
 	FIFO_M_Remm   <= std_logic_vector(remm);
-	FIFO_M_Full   <= full;
-	FIFO_M_AFull  <= afull;
+	FIFO_M_Full   <= full or FIFO_Rst;
+	FIFO_M_AFull  <= afull or FIFO_Rst;
 
 	FIFO_Has_Data <= not empty;
 

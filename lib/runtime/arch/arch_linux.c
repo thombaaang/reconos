@@ -146,6 +146,22 @@ void reconos_proc_control_cache_flush(int fd) {
 #endif
 }
 
+void reconos_proc_control_set_ic_sig(int fd, int sig) {
+	ioctl(fd, RECONOS_PROC_CONTROL_SET_IC_SIG, &sig);
+}
+
+int reconos_proc_control_get_ic_rdy(int fd) {
+	int data;
+
+	ioctl(fd, RECONOS_PROC_CONTROL_GET_IC_RDY, &data);
+
+	return data;
+}
+
+void reconos_proc_control_set_ic_rst(int fd, int rst) {
+	ioctl(fd, RECONOS_PROC_CONTROL_SET_IC_RST, &rst);
+}
+
 void reconos_proc_control_close(int fd) {
 	close(fd);
 }
@@ -220,7 +236,7 @@ void reconos_clock_close(int fd) {
 
 /* == Reconfiguration related functions ================================= */
 
-#if defined(RECONOS_BOARD_zedboard_c) || defined(RECONOS_BOARD_zedboard_c)
+#if defined(RECONOS_BOARD_zedboard_c) || defined(RECONOS_BOARD_zedboard_d)
 
 int is_configured = 0;
 pthread_mutex_t mutex;
@@ -232,14 +248,11 @@ inline void init_xdevcfg() {
 	}
 }
 
-int load_partial_bitstream(uint32_t *bitstream, unsigned int bitstream_length) {
+int load_bitstream(uint32_t *bitstream, size_t bitstream_length, int partial) {
 	int fd;
-	char d = '1';
+	char d;
 
 	init_xdevcfg();
-
-	//printf("... Programming FPGA with partial bitstream\n");
-	//printf("... Bitstream has size of %d bytes and begins with 0x%x 0x%x 0x%x\n", bitstream_length * 4, bitstream[0], bitstream[1], bitstream[2]);
 
 	pthread_mutex_lock(&mutex);
 
@@ -248,6 +261,10 @@ int load_partial_bitstream(uint32_t *bitstream, unsigned int bitstream_length) {
 		printf("[xdevcfg lib] failed to open\n");
 		exit(EXIT_FAILURE);
 	}
+	if (partial)
+		d = '1';
+	else
+		d = '0';
 	write(fd, &d, 1);
 	close(fd);
 
@@ -256,7 +273,7 @@ int load_partial_bitstream(uint32_t *bitstream, unsigned int bitstream_length) {
 		printf("[xdevcfg lib] failed to open\n");
 		exit(EXIT_FAILURE);
 	}
-	write(fd, bitstream, bitstream_length * 4);
+	write(fd, bitstream, bitstream_length);
 	close(fd);
 
 	fd = open("/sys/class/xdevcfg/xdevcfg/device/prog_done", O_RDONLY);
@@ -266,7 +283,7 @@ int load_partial_bitstream(uint32_t *bitstream, unsigned int bitstream_length) {
 	}
 	do {
 		read(fd, &d, 1);
-		//printf("... Waiting for programming to finish, currently reading %c\n", d);
+		debug("... Waiting for programming to finish, currently reading %c\n", d);
 	} while(d != '1');
 	close(fd);
 
@@ -275,9 +292,9 @@ int load_partial_bitstream(uint32_t *bitstream, unsigned int bitstream_length) {
 	return 0;
 }
 
-#elif RECONOS_BOARD_ml605
+#elif defined(RECONOS_BOARD_ml605)
 
-int load_partial_bitstream(uint32_t *bitstream, unsigned int bitstream_length) {
+int load_partial_bitstream(uint32_t *bitstream, unsigned int bitstream_length, int partial) {
 	panic("NOT IMPLEMENTED YET\n");
 
 	return 0;

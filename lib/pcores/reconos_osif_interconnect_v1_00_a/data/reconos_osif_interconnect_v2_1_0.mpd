@@ -64,6 +64,10 @@ PORT OSIF_Ic2Sw_Empty = "FIFO_S_Empty", DIR = O, BUS = OSIF_Ic2Sw
 PORT OSIF_Ic2Sw_RE = "FIFO_S_RE", DIR = I, BUS = OSIF_Ic2Sw
 PORT OSIF_Ic2Sw_Has_Data = "", DIR = O, SIGIS = INTERRUPT, SENSITIVITY = LEVEL_HIGH
 
+PORT IC_Sig = "", DIR = I
+PORT IC_Rdy = "", DIR = O
+PORT IC_Rst = "", DIR = I, SIGIS = RST
+
 PORT SYS_Clk = "", DIR = I, SIGIS = CLK
 PORT SYS_Rst = "", DIR = I, SIGIS = RST
 

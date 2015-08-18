@@ -303,6 +303,11 @@ void reconos_init();
 void reconos_cleanup();
 
 /*
+ * Reconfigures the interconnect.
+ */
+void reconos_ic_reconfigure(uint32_t *bitstream, size_t bitstream_length);
+
+/*
  * Flushes the cache if needed.
  */
 void reconos_cache_flush();

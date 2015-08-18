@@ -25,9 +25,10 @@
 --                   Reg4: TLB misses - Read only
 --                   # resets
 --                   Reg5: ReconOS reset (reset everything) - Write only
---                   Reg6: HWT reset (multiple registers) - Write only
+--                   Reg6: Interconnect signals
+--                   Reg7: HWT reset (multiple registers) - Write only
 --                         | x , x-1, ... | x-32 , x-33, ... 0 |
---                   Reg7: HWT signal - Write only
+--                   Reg8: HWT signal - Write only
 --                         | x , x-1, ... | x-32 , x-33, ... 0 |
 --
 --                   Page fault handling works the following:
@@ -94,6 +95,11 @@ entity reconos_proc_control is
 		MMU_Tlb_Hits         : in  std_logic_vector(31 downto 0);
 		MMU_Tlb_Misses       : in  std_logic_vector(31 downto 0);
 
+		-- Interconnect signals
+		IC_Sig : out std_logic;
+		IC_Rdy : in  std_logic := '1';
+		IC_Rst : out std_logic;
+
 		-- Bus protocol ports, do not add to or delete
 		S_AXI_ACLK           : in  std_logic;
 		S_AXI_ARESETN        : in  std_logic;
@@ -134,7 +140,7 @@ architecture implementation of reconos_proc_control is
 		);
 
 	constant NUM_HWT_REGS : integer := ((C_NUM_HWTS - 1) / C_SLV_DWIDTH) + 1;
-	constant USER_SLV_NUM_REG   : integer   := NUM_HWT_REGS * 2 + 6;
+	constant USER_SLV_NUM_REG   : integer   := NUM_HWT_REGS * 2 + 7;
 	constant USER_NUM_REG       : integer   := USER_SLV_NUM_REG;
 	constant TOTAL_IPIF_CE      : integer   := USER_NUM_REG;
 
@@ -244,6 +250,12 @@ begin
 			MMU_Pgd          => MMU_Pgd,
 			MMU_Tlb_Hits     => MMU_Tlb_Hits,
 			MMU_Tlb_Misses   => MMU_Tlb_Misses,
+
+
+			-- Interconnect signals
+			IC_Sig => IC_Sig,
+			IC_Rdy => IC_Rdy,
+			IC_Rst => IC_Rst,
 
 		
 			-- Bus protocol ports

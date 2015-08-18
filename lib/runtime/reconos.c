@@ -407,7 +407,7 @@ void reconos_init() {
 		hwslot_init(&_hwslots[i], id, osif);
 	}
 
-	RECONOS_NUM_SWSLOTS = 4;
+	RECONOS_NUM_SWSLOTS = 8;
 
 	_swslots = (struct swslot *)malloc(RECONOS_NUM_SWSLOTS * sizeof(struct swslot));
 	if (!_swslots) {
@@ -440,6 +440,20 @@ void reconos_init() {
  */
 void reconos_cleanup() {
 	reconos_proc_control_sys_reset(_proc_control);
+}
+
+/*
+ * @see header
+ */
+void reconos_ic_reconfigure(uint32_t *bitstream, size_t bitstream_length) {
+	reconos_proc_control_set_ic_sig(_proc_control, 1);
+	debug("[reconos-core] signalled interconnect, now waiting for ready ...\n");
+	while(!reconos_proc_control_get_ic_rdy(_proc_control));
+	debug("[reconos-core] ready received, waiting and unsignalling ...\n");
+	reconos_proc_control_set_ic_rst(_proc_control, 1);
+	load_bitstream(bitstream, bitstream_length, 1);
+	reconos_proc_control_set_ic_sig(_proc_control, 0);
+	reconos_proc_control_set_ic_rst(_proc_control, 0);
 }
 
 /*
