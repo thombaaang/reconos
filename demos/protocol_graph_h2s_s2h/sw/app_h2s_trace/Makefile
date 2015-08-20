@@ -1,8 +1,8 @@
 CFLAGS=-O3 -g -Wall -I ../../../../linux/reconos/libreconos-us
 CC=microblaze-unknown-linux-gnu-gcc
 
-TARGET=app_s2h
-APP_OBJS = app_s2h.o timing.o packetgen.o
+TARGET=app_h2s_trace
+APP_OBJS = app_h2s_trace.o timing.o
 
 all: $(TARGET) 
 

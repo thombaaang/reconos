@@ -75,7 +75,7 @@ architecture implementation of hwt_h2s is
 	constant C_MAX_PACKET_LEN : integer := 1500;
 	constant C_MIN_PACKET_LEN : integer := 64;
 	
-	-- IMPORTANT: define max timeout and cycles per millisecond here
+	-- IMPORTANT: define timeout and cycles per milisecond here
 	constant C_CYCLES_PER_MSECOND : integer := 100*1000;
 	constant C_TIMEOUT_MAX        : integer := 10000*C_CYCLES_PER_MSECOND; --10 sec
 
