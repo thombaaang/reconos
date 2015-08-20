@@ -1,0 +1,150 @@
+Maximum Packet Rates
+====================
+
+packet_size = 64 byte
+----------------------
+
+ostinato: idp=2; packet_rate=10'000'000
+
+for i in {1..100}
+do
+   ./generic_fb -r5 -i2 -l >> max_pkt_rate_64_idp2.txt
+done
+
+
+ostinato: idp=3; packet_rate=10'000'000
+
+for i in {1..100}
+do
+   ./generic_fb -r5 -i3 -l >> max_pkt_rate_64_idp3.txt
+done
+
+
+ostinato: idp=4; packet_rate=10'000'000
+
+for i in {1..100}
+do
+   ./generic_fb -r5 -i4 -l >> max_pkt_rate_64_idp4.txt
+done
+
+
+ostinato: idp=5; packet_rate=10'000'000
+
+for i in {1..100}
+do
+   ./generic_fb -r5 -i3 -l >> max_pkt_rate_64_idp5.txt
+done
+
+
+
+packet_size = 500 byte
+----------------------
+
+ostinato: idp=2; packet_rate=10'000'000
+
+for i in {1..100}
+do
+   ./generic_fb -r5 -i2 -l >> max_pkt_rate_500_idp2.txt
+done
+
+
+ostinato: idp=3; packet_rate=10'000'000
+
+for i in {1..100}
+do
+   ./generic_fb -r5 -i3 -l >> max_pkt_rate_500_idp3.txt
+done
+
+
+ostinato: idp=4; packet_rate=10'000'000
+
+for i in {1..100}
+do
+   ./generic_fb -r5 -i4 -l >> max_pkt_rate_500_idp4.txt
+done
+
+
+ostinato: idp=5; packet_rate=10'000'000
+
+for i in {1..100}
+do
+   ./generic_fb -r5 -i3 -l >> max_pkt_rate_500_idp5.txt
+done
+
+
+packet_size = 1500 byte
+----------------------
+
+ostinato: idp=2; packet_rate=10'000'000
+
+for i in {1..100}
+do
+   ./generic_fb -r5 -i2 -l >> max_pkt_rate_1500_idp2.txt
+done
+
+
+ostinato: idp=3; packet_rate=10'000'000
+
+for i in {1..100}
+do
+   ./generic_fb -r5 -i3 -l >> max_pkt_rate_1500_idp3.txt
+done
+
+
+ostinato: idp=4; packet_rate=10'000'000
+
+for i in {1..100}
+do
+   ./generic_fb -r5 -i4 -l >> max_pkt_rate_1500_idp4.txt
+done
+
+
+ostinato: idp=5; packet_rate=10'000'000
+
+for i in {1..100}
+do
+   ./generic_fb -r5 -i3 -l >> max_pkt_rate_1500_idp5.txt
+done
+
+
+Time between packets
+====================
+
+packet_size = 64 byte
+packet_rate = 10'000'000 pps
+----------------------
+
+Delay in HW
+-----------
+
+delay_per_packet_secs = 5
+
+idp = 2
+./generic_fb -t5 -i2 -l >> delay_hw_5secs_idp2.txt
+
+idp = 4
+./generic_fb -t5 -i4 -l >> delay_hw_5secs_idp4.txt
+
+
+Delay in SW
+-----------
+
+delay_per_packet_secs = 5
+
+idp = 3
+./generic_fb -t5 -i3 -l >> delay_sw_5secs_idp3.txt
+
+idp = 4
+./generic_fb -t5 -i4 -l >> delay_sw_5secs_idp4.txt
+
+
+
+
+TODO
+====
+ - other packet size for delay measurement
+ - delay_per_byte
+
+
+
+

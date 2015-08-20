@@ -174,9 +174,13 @@ begin
 	    			o_global_addr  <= address_out(5 downto 2);
 	    			o_local_addr  <= address_out(1 downto 0);
 	    		else --we don't know the connection, send it to the sw (mainly for debugging, later on we could drop it (how to deal with connection setup?)
-	    			o_global_addr  <= "0001";
-	    			o_local_addr  <= "01"; 
-	    			int_addr_next  <= "000101";
+	    			--o_global_addr  <= "0001";
+	    			--o_local_addr  <= "01"; 
+	    			--int_addr_next  <= "000101";
+					-- now changed to drop the packet (S2H acts as black hole)
+					o_global_addr  <= "0000";
+	    			o_local_addr  <= "00"; 
+	    			int_addr_next  <= "000000";
 	    		end if;
 	    		
 	    		state_next  <= STATE_FORWARD_SOF;
