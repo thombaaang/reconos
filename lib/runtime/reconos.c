@@ -260,7 +260,7 @@ void reconos_thread_create_auto(struct reconos_thread *rt, int tt) {
 			return;
 		}
 
-		reconos_thread_create(rt, i);
+		reconos_thread_create(rt, rt->allowed_hwslots[i]->id);
 	} else if (tt & RECONOS_THREAD_SW) {
 		pthread_create(&rt->swslot, 0, rt->swentry, (void*)rt);
 	}
