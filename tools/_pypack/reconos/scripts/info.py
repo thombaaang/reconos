@@ -24,7 +24,7 @@ def info(args):
 	print("ReconOS Project '" + prj.name + "'")
 	print("  Board".ljust(20) + str(prj.impinfo.board))
 	print("  Reference Design".ljust(20) + prj.impinfo.design)
-	print("  Part".ljust(20) + prj.impinfo.get_part())
+	print("  Part".ljust(20) + prj.impinfo.part)
 	print("  Operating System".ljust(20) + prj.impinfo.os)
 	print("  Xilinx Tools".ljust(20) + ",".join(prj.impinfo.xil))
 	print("  CFlags".ljust(20) + prj.impinfo.cflags)
