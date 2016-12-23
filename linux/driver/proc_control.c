@@ -148,30 +148,6 @@ static inline void write_reg(struct proc_control_dev *dev,
 	iowrite32(data, dev->mem + reg);
 }
 
-/*
- * Flushing of the systems caches
- *
- *   no parameters
- */
-#if defined(RECONOS_ARCH_zynq)
-static void flush_cache(void) {
-}
-#elif defined(RECONOS_ARCH_microblaze)
-static void flush_cache(void) {
-	int i;
-	int baseaddr, bytesize, linelen;
-
-	baseaddr = 0x20000000;   // C_DCACHE_BASEADDR
-	bytesize = 64 * 1024;    // C_DCACHE_BYTE_SIZE
-	linelen = 4 * 4;         // C_DCACHE_LINE_LEN * 4
-
-	for (i = 0; i < bytesize; i += linelen) {
-		asm volatile ("wdc.flush %0, %1;" :: "d" (baseaddr), "d" (i));
-	}
-}
-#endif
-
-
 /* == File operations ================================================== */
 
 /*
@@ -315,10 +291,6 @@ static long proc_control_ioctl(struct file *filp, unsigned int cmd,
 			}
 
 			spin_unlock(&dev->lock);
-			break;
-
-		case RECONOS_PROC_CONTROL_CACHE_FLUSH:
-			flush_cache();
 			break;
 
 		case RECONOS_PROC_CONTROL_SET_IC_SIG:
