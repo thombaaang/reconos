@@ -345,7 +345,8 @@ static irqreturn_t interrupt(int irq, void *data) {
  */
 static struct of_device_id proc_control_of_match[] =
 {
-    { .compatible = "upb,reconos-proc-control-3.1"},
+    { .compatible = "upb,reconos-control-3.1" },
+    { .compatible = "upb,reconos-proc-control-3.1" },
     {}
 };
 
