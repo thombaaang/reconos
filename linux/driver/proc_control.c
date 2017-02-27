@@ -21,6 +21,7 @@
 
 #include "proc_control.h"
 
+#include <linux/spinlock.h>
 #include <linux/wait.h>
 #include <linux/sched.h>
 #include <linux/interrupt.h>
@@ -28,33 +29,15 @@
 #include <linux/fs.h>
 #include <linux/miscdevice.h>
 #include <linux/ioport.h>
-#include <linux/spinlock.h>
+#include <linux/platform_device.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
 #include <asm/io.h>
 #include <asm/uaccess.h>
 #include <asm/pgtable.h>
 
 
 /* == General definitions ============================================== */
-
-/*
- * Definition of memory
- *
- *   base_addr - base address as configured in the hardware design
- *   mem_siz   - size of the memory region available
- */
-#define BASE_ADDR 0x6FE00000
-#define MEM_SIZE  0x10000
-
-/*
- * Definition of interrupt numbers (architecture specific)
- *
- *   irq - interrupt number to which the proc control is connected
- */
-#if defined(RECONOS_ARCH_zynq)
-#define IRQ       91
-#elif defined(RECONOS_ARCH_microblaze)
-#define IRQ       5
-#endif
 
 /*
  * Register definitions as offset from base address
@@ -358,22 +341,60 @@ static irqreturn_t interrupt(int irq, void *data) {
 /* == Init and exit functions ========================================== */
 
 /*
+ * Struct for device tree matching
+ */
+static struct of_device_id proc_control_of_match[] =
+{
+    { .compatible = "upb,reconos-proc-control-3.1"},
+    {}
+};
+
+
+/*
  * @see header
  */
 int proc_control_num_hwts_static(void) {
+	struct device_node *node = NULL;
+	struct resource res;
+	uint32_t base_addr;
+	int mem_size;
 	void __iomem *mem;
 	int num_hwts;
 
+	// get matching of node
+	node = of_find_matching_node(NULL, proc_control_of_match);
+	if (!node)
+	{
+		__printk(KERN_ERR "[reconos-proc-control-STATIC] "
+		                  "device tree node not found\n");
+		goto of_failed;
+	}
+	__printk(KERN_INFO "[reconos-proc-control-STATIC] "
+	                   "found device %s\n", node->name);
+
+	// getting address from device tree
+	if (of_address_to_resource(node, 0, &res))
+	{
+		__printk(KERN_ERR "[reconos-proc-control-STATIC] "
+	                      "address could not be determined\n");
+		goto req_failed;
+	}
+	base_addr = res.start;
+	mem_size = res.end - res.start + 1;
+	__printk(KERN_INFO "[reconos-proc-control-STATIC] "
+	                   "found memory at 0x%08x with size 0x%x\n",
+	                   base_addr, mem_size);
+
 	// allocation io memory to read proc control registers
-	if (!request_mem_region(BASE_ADDR, MEM_SIZE, "reconos-proc-control")) {
-		__printk(KERN_WARNING "[reconos-proc-control] "
+	if (!request_mem_region(base_addr, mem_size, "reconos-proc-control")) {
+		__printk(KERN_WARNING "[reconos-proc-control-STATIC] "
 		                      "memory region busy\n");
 		goto req_failed;
 	}
 
-	mem = ioremap(BASE_ADDR, MEM_SIZE);
+	mem = ioremap(base_addr, mem_size);
 	if (!mem) {
-		__printk(KERN_WARNING "[reconos-proc-control] "
+		__printk(KERN_WARNING "[reconos-proc-control-STATIC] "
 		                      "ioremap failed\n");
 		goto map_failed;
 	}
@@ -382,14 +403,15 @@ int proc_control_num_hwts_static(void) {
 
 	// free io memory mapping
 	iounmap(mem);
-	release_mem_region(BASE_ADDR, MEM_SIZE);
+	release_mem_region(base_addr, mem_size);
 
 	return num_hwts;
 
 map_failed:
-	release_mem_region(BASE_ADDR, MEM_SIZE);
+	release_mem_region(base_addr, mem_size);
 
 req_failed:
+of_failed:
 	return -1;
 }
 
@@ -397,7 +419,9 @@ req_failed:
  * @see header
  */
 int proc_control_init(void) {
-	struct proc_control_dev *dev;
+	struct proc_control_dev *dev = NULL;
+	struct device_node *node = NULL;
+	struct resource res;
 	int i;
 
 	__printk(KERN_INFO "[reconos-proc-control] "
@@ -405,11 +429,19 @@ int proc_control_init(void) {
 
 	dev = &proc_control;
 
+	// get matching of node
+	node = of_find_matching_node(NULL, proc_control_of_match);
+	if (!node)
+	{
+		__printk(KERN_ERR "[reconos-proc-control] "
+		                  "device tree node not found\n");
+		goto of_failed;
+	}
+	__printk(KERN_INFO "[reconos-proc-control] "
+	                   "found device %s\n", node->name);
+
 	// set some general information of proc control
 	strncpy(dev->name, "reconos-proc-control", 25);
-	dev->base_addr = BASE_ADDR;
-	dev->mem_size = MEM_SIZE;
-	dev->irq = IRQ;
 	dev->page_fault = 0;
 
 	// allocating reset-register
@@ -432,14 +464,27 @@ int proc_control_init(void) {
 		goto hwt_signals_failed;
 	}
 
+	// getting address from device tree
+	if (of_address_to_resource(node, 0, &res))
+	{
+		__printk(KERN_ERR "[reconos-proc-control] "
+	                      "address could not be determined\n");
+		goto req_failed;
+	}
+	dev->base_addr = res.start;
+	dev->mem_size = res.end - res.start + 1;
+	__printk(KERN_INFO "[reconos-proc-control] "
+	                   "found memory at 0x%08x with size 0x%x\n",
+	                   dev->base_addr, dev->mem_size);
+
 	// allocation io memory to read proc control registers
-	if (!request_mem_region(BASE_ADDR, MEM_SIZE, dev->name)) {
+	if (!request_mem_region(dev->base_addr, dev->mem_size, dev->name)) {
 		__printk(KERN_WARNING "[reconos-proc-control] "
 		                      "memory region busy\n");
 		goto req_failed;
 	}
 
-	dev->mem = ioremap(BASE_ADDR, MEM_SIZE);
+	dev->mem = ioremap(dev->base_addr, dev->mem_size);
 	if (!dev->mem) {
 		__printk(KERN_WARNING "[reconos-proc-control] "
 		                      "ioremap failed\n");
@@ -449,14 +494,25 @@ int proc_control_init(void) {
 	// reset entire system
 	write_reg(dev, SYS_RESET_REG, 1);
 
+	// getting interrupt number from device tree
+	dev->irq = irq_of_parse_and_map(node, 0);
+	if (!dev->irq)
+	{
+		__printk(KERN_ERR "[reconos-proc-control] "
+		                  "irq could not be determined\n");
+		goto irq_failed;
+	}
+	__printk(KERN_INFO "[reconos-proc-control] "
+	                   "found interrupt %d\n", dev->irq);
+
 	// requesting interrupt
-	if (request_irq(IRQ, interrupt, 0, "reconos-proc-control", dev)) {
+	if (request_irq(dev->irq, interrupt, 0, "reconos-proc-control", dev)) {
 		__printk(KERN_WARNING "[reconos-proc-control] "
 		                      "can't get irq\n");
 		goto irq_failed;
 	}
 
-	disable_irq(IRQ);
+	disable_irq(dev->irq);
 
 	// initialize spinlock
 	spin_lock_init(&dev->lock);
@@ -482,14 +538,14 @@ int proc_control_init(void) {
 	return 0;
 
 reg_failed:
-	free_irq(IRQ, dev);
+	free_irq(dev->irq, dev);
 	misc_deregister(&dev->mdev);
 
 irq_failed:
 	iounmap(dev->mem);
 
 map_failed:
-	release_mem_region(BASE_ADDR, MEM_SIZE);
+	release_mem_region(dev->base_addr, dev->mem_size);
 
 req_failed:
 	kfree(dev->hwt_signals);
@@ -498,6 +554,7 @@ hwt_signals_failed:
 	kfree(dev->hwt_resets);
 
 hwt_resets_failed:
+of_failed:
 	return -1;
 }
 
@@ -516,10 +573,10 @@ int proc_control_exit(void) {
 
 	kfree(dev->hwt_resets);
 
-	free_irq(IRQ, dev);
+	free_irq(dev->irq, dev);
 
 	iounmap(dev->mem);
-	release_mem_region(BASE_ADDR, MEM_SIZE);
+	release_mem_region(dev->base_addr, dev->mem_size);
 
 	return 0;
 }

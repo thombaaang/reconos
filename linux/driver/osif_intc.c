@@ -24,6 +24,7 @@
 
 #include "osif_intc.h"
 
+#include <linux/spinlock.h>
 #include <linux/wait.h>
 #include <linux/sched.h>
 #include <linux/interrupt.h>
@@ -31,29 +32,11 @@
 #include <linux/fs.h>
 #include <linux/miscdevice.h>
 #include <linux/ioport.h>
+#include <linux/platform_device.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
 #include <asm/io.h>
 #include <asm/uaccess.h>
-#include <linux/spinlock.h>
-
-/*
- * Definition of memory
- *
- *   base_addr - base address as configured in the hardware design
- *   mem_siz   - size of the memory region available
- */
-#define BASE_ADDR  0x7B400000
-#define MEM_SIZE   0x10000
-
-/*
- * Definition of interrupt numbers (architecture specific)
- *
- *   irq - interrupt number to which the proc control is connected
- */
-#if defined(RECONOS_ARCH_zynq)
-#define IRQ       90
-#elif defined(RECONOS_ARCH_microblaze)
-#define IRQ       4
-#endif
 
 /*
  * Register definitions as offset from base address
@@ -334,18 +317,40 @@ static irqreturn_t interrupt(int irq, void *data) {
 /* == Init and exit functions ========================================== */
 
 /*
+ * Struct for device tree matching
+ */
+static struct of_device_id osif_of_match[] =
+{
+    { .compatible = "upb,reconos-osif-intc-3.1"},
+    {}
+};
+
+/*
  * @see header
  */
 int osif_intc_init() {
-	struct osif_intc_dev *dev;
+	struct osif_intc_dev *dev = NULL;
+	struct device_node *node = NULL;
+	struct resource res;
+
+	__printk(KERN_INFO "[reconos-osif] "
+	                   "initializing driver ...\n");
 
 	dev = &osif_intc;
 
+	// get matching of node
+	node = of_find_matching_node(NULL, osif_of_match);
+	if (!node)
+	{
+		__printk(KERN_ERR "[reconos-osif] "
+		                  "device tree node not found\n");
+		goto of_failed;
+	}
+	__printk(KERN_INFO "[reconos-osif] "
+	                   "found device %s\n", node->name);
+
 	// set some general information of intc
 	strncpy(dev->name, "reconos-osif-intc", 25);
-	dev->base_addr = BASE_ADDR;
-	dev->mem_size = MEM_SIZE;
-	dev->irq = IRQ;
 
 	init_waitqueue_head(&dev->wait);
 	spin_lock_init(&dev->lock);
@@ -372,14 +377,27 @@ int osif_intc_init() {
 		goto irqbreak_failed;
 	}
 
+	// getting address from device tree
+	if (of_address_to_resource(node, 0, &res))
+	{
+		__printk(KERN_ERR "[reconos-osif] "
+	                      "address could not be determined\n");
+		goto req_failed;
+	}
+	dev->base_addr = res.start;
+	dev->mem_size = res.end - res.start + 1;
+	__printk(KERN_INFO "[reconos-osif] "
+	                   "found memory at 0x%08x with size 0x%x\n",
+	                   dev->base_addr, dev->mem_size);
+
 	// allocation io memory to read intc registers
-	if (!request_mem_region(BASE_ADDR, MEM_SIZE, dev->name)) {
+	if (!request_mem_region(dev->base_addr, dev->mem_size, dev->name)) {
 		__printk(KERN_WARNING "[reconos-osif-intc] "
 		                      "memory region busy\n");
 		goto req_failed;
 	}
 
-	dev->mem = ioremap(BASE_ADDR, MEM_SIZE);
+	dev->mem = ioremap(dev->base_addr, dev->mem_size);
 	if(!dev->mem) {
 		__printk(KERN_WARNING "[reconos-osif-intc] "
 		                      "ioremap failed\n");
@@ -389,8 +407,19 @@ int osif_intc_init() {
 	// disable all interrupts to avoid useless interrupts
 	write_interrupt_enable(dev);
 
+	// getting interrupt number from device tree
+	dev->irq = irq_of_parse_and_map(node, 0);
+	if (!dev->irq)
+	{
+		__printk(KERN_ERR "[reconos-osif] "
+		                  "irq could not be determined\n");
+		goto irq_failed;
+	}
+	__printk(KERN_INFO "[reconos-osif] "
+	                   "found interrupt %d\n", dev->irq);
+
 	// requesting interrupt
-	if(request_irq(IRQ, interrupt, 0, "reconos-osif-intc", dev)) {
+	if(request_irq(dev->irq, interrupt, 0, "reconos-osif-intc", dev)) {
 		__printk(KERN_WARNING "[reconos-osif-intc] "
 		                      "can't get irq\n");
 		goto irq_failed;
@@ -414,12 +443,13 @@ int osif_intc_init() {
 	goto out;
 
 reg_failed:
+	free_irq(dev->irq, dev);
+
 irq_failed:
-	free_irq(IRQ, dev);
 	iounmap(dev->mem);
 
 map_failed:
-	release_mem_region(BASE_ADDR, MEM_SIZE);
+	release_mem_region(dev->base_addr, dev->mem_size);
 
 req_failed:
 	kfree(dev->irq_break);
@@ -431,6 +461,7 @@ irqenable_failed:
 	kfree(dev->irq_reg);
 
 irqreg_failed:
+of_failed:
 	return -1;
 
 out:
@@ -448,10 +479,10 @@ int osif_intc_exit() {
 
 	misc_deregister(&dev->mdev);
 
-	free_irq(IRQ, dev);
+	free_irq(dev->irq, dev);
 
 	iounmap(dev->mem);
-	release_mem_region(BASE_ADDR, MEM_SIZE);
+	release_mem_region(dev->base_addr, dev->mem_size);
 
 	kfree(dev->irq_enable);
 	kfree(dev->irq_reg);
