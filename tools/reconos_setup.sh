@@ -91,12 +91,12 @@ mv system.mhs system.mhs.orig
 if [ $num_reconf_hwts -ne 0 ]
 then
 	# create mhs files
-	python ${RECONOS}/tools/python/mhsaddhwts.py "-reconf" $RECONOS_ARCH system.mhs.orig $num_static_hwts $num_reconf_regions $static_hwts "reconos_hwt_idle_v1_00_a" > system_static.mhs
+	python2 ${RECONOS}/tools/python/mhsaddhwts.py "-reconf" $RECONOS_ARCH system.mhs.orig $num_static_hwts $num_reconf_regions $static_hwts "reconos_hwt_idle_v1_00_a" > system_static.mhs
 	ln -s system_static.mhs system.mhs
 
 	for hwt in $reconf_hwts
 	do
-		python ${RECONOS}/tools/python/mhsaddhwts.py "-reconf" $RECONOS_ARCH system.mhs.orig $num_static_hwts $num_reconf_regions $static_hwts $hwt > system_reconf_$hwt.mhs
+		python2 ${RECONOS}/tools/python/mhsaddhwts.py "-reconf" $RECONOS_ARCH system.mhs.orig $num_static_hwts $num_reconf_regions $static_hwts $hwt > system_reconf_$hwt.mhs
 	done
 
 	# create system.ucf
@@ -109,9 +109,9 @@ else
 	# create mhs file
 	if $RECONOS_MMU
 	then
-		python ${RECONOS}/tools/python/mhsaddhwts.py $RECONOS_ARCH system.mhs.orig $num_static_hwts 0 $static_hwts > system.mhs
+		python2 ${RECONOS}/tools/python/mhsaddhwts.py $RECONOS_ARCH system.mhs.orig $num_static_hwts 0 $static_hwts > system.mhs
 	else
-		python ${RECONOS}/tools/python/mhsaddhwts.py "-nommu" $RECONOS_ARCH system.mhs.orig $num_static_hwts 0 $static_hwts > system.mhs
+		python2 ${RECONOS}/tools/python/mhsaddhwts.py "-nommu" $RECONOS_ARCH system.mhs.orig $num_static_hwts 0 $static_hwts > system.mhs
 	fi
 fi
 
