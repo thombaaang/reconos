@@ -58,11 +58,11 @@ def hwt_static(name, num, version, use_mem):
 
 def osif_fifo(num, direction):
 	instance = mhstools.MHSPCore("reconos_fifo")
-        instance.addEntry("PARAMETER", "INSTANCE", "reconos_osif_fifo_%d_" % num + direction)
-        instance.addEntry("PARAMETER", "HW_VER", "1.00.a")
-        instance.addEntry("PARAMETER", "C_FIFO_DEPTH", DEFAULT_OSIF_FIFO_DEPTH)
-        instance.addEntry("BUS_INTERFACE", "FIFO_M", "reconos_osif_fifo_%d_" % num + direction + "_FIFO_M")
-        instance.addEntry("BUS_INTERFACE", "FIFO_S", "reconos_osif_fifo_%d_" % num + direction + "_FIFO_S")
+	instance.addEntry("PARAMETER", "INSTANCE", "reconos_osif_fifo_%d_" % num + direction)
+	instance.addEntry("PARAMETER", "HW_VER", "1.00.a")
+	instance.addEntry("PARAMETER", "C_FIFO_DEPTH", DEFAULT_OSIF_FIFO_DEPTH)
+	instance.addEntry("BUS_INTERFACE", "FIFO_M", "reconos_osif_fifo_%d_" % num + direction + "_FIFO_M")
+	instance.addEntry("BUS_INTERFACE", "FIFO_S", "reconos_osif_fifo_%d_" % num + direction + "_FIFO_S")
 	if direction == "hw2sw":
 		instance.addEntry("PORT", "FIFO_Has_Data", "reconos_osif_fifo_%d_" % num + direction + "_FIFO_Has_Data")
 	instance.addEntry("PORT", "FIFO_Rst", "reconos_proc_control_0_PROC_Hwt_Rst_%d" % num)
@@ -220,10 +220,10 @@ class HWT:
 	"""
 This class represents a HWT
 fields: self.name
-        self.version
-        self.count
-        self.is_reconf
-        self.slots
+		self.version
+		self.count
+		self.is_reconf
+		self.slots
 """
 	def __init__(self, hwt_str, is_reconf):
 		self.name = ""
@@ -274,8 +274,8 @@ fields: self.name
 					self.slots.append(int(hwt_str[start:]))
 					self.count += 1
 
-        def __str__(self):
-                return "HWT: " + self.name + ", Version: " + self.version + ", Count: " + str(self.count) + ", Reconfigurable: " + str(self.is_reconf)
+	def __str__(self):
+		return "HWT: " + self.name + ", Version: " + self.version + ", Count: " + str(self.count) + ", Reconfigurable: " + str(self.is_reconf)
 
 
 # at first parse all parameters
@@ -309,7 +309,6 @@ mhs = mhstools.MHS(sys.argv[arg_pos + 1])
 num_static_hwts = int(sys.argv[arg_pos + 2])
 num_reconf_regions = int(sys.argv[arg_pos + 3])
 hwts_str = sys.argv[arg_pos + 4:]
-
 
 if arch == "zynq":
 	HWT_BUS = "axi_hwt"
