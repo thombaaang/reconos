@@ -21,6 +21,7 @@
 
 #include "proc_control.h"
 
+#include <linux/spinlock.h>
 #include <linux/wait.h>
 #include <linux/sched.h>
 #include <linux/interrupt.h>
@@ -28,21 +29,12 @@
 #include <linux/fs.h>
 #include <linux/miscdevice.h>
 #include <linux/ioport.h>
-#include <linux/spinlock.h>
+#include <linux/platform_device.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
 #include <asm/io.h>
 #include <asm/uaccess.h>
 #include <asm/pgtable.h>
-
-#define PROC_CONTROL_BASE_ADDR 0x6FE00000
-#define PROC_CONTROL_MEM_SIZE  0x10000
-
-#ifdef RECONOS_ARCH_zynq
-#define PROC_CONTROL_IRQ       91
-#endif
-
-#ifdef RECONOS_ARCH_microblaze
-#define PROC_CONTROL_IRQ       5
-#endif
 
 #define PROC_CONTROL_NUM_HWTS_REG        0x00
 #define PROC_CONTROL_PGD_ADDR_REG        0x04
@@ -56,6 +48,7 @@
 struct proc_control_dev {
 	char name[25];
 	unsigned int addr;
+	int size;
 	int irq;
 
 	void __iomem *mem;
@@ -93,63 +86,11 @@ static int proc_control_open(struct inode *inode, struct file *filp) {
 
 
 #ifdef RECONOS_ARCH_zynq
-// do page table walk
-static unsigned long do_ptw(unsigned long addr) {
-	pgd_t *pgd;
-	pte_t *pte;
-	pud_t *pud;
-	pmd_t *pmd;
-	struct page *page;
-	unsigned int pfn;
-
-	struct mm_struct *mm = current->mm;
-
-	unsigned long page_addr = 0;
-
-	__printk(KERN_INFO "Perfoming page table walk ...\n");
-
-	pgd = pgd_offset(mm, addr);
-	if (pgd_none(*pgd) || pgd_bad(*pgd))
-		goto out;
-	__printk(KERN_INFO "PGD valid ... at 0x%x\n", virt_to_phys(pgd));
-	__printk(KERN_INFO "PGD data (for HW) = 0x%x\n", (unsigned int) *((unsigned int *)pgd));
-
-	pud = pud_offset(pgd, addr);
-	if (pud_none(*pud) || pud_bad(*pud))
-		goto out;
-	__printk(KERN_INFO "PUD valid ... at 0x%x\n", virt_to_phys(pud));
-
-	pmd = pmd_offset(pud, addr);
-	if (pmd_none(*pmd) || pmd_bad(*pmd))
-		goto out;
-	__printk(KERN_INFO "PMD valid ... at 0x%x\n", virt_to_phys(pmd));
-
-	pte = pte_offset_map(pmd, addr);
-	if (pte_none(*pte))
-		goto out;
-	__printk(KERN_INFO "PTE valid ... at 0x%x\n", virt_to_phys(pte));
-	__printk(KERN_INFO "PTE (for HW) at 0x%x\n", (unsigned int)virt_to_phys((void *) (((unsigned int *)pte) + 0x200)));
-	__printk(KERN_INFO "PTE data (for HW) = 0x%x\n", (unsigned int) *(((unsigned int *)pte) + 0x200));
-
-	page = pte_page(*pte);
-	pfn = page_to_pfn(page);
-	__printk(KERN_INFO "Page is at 0x%x\n", page_to_phys(page));
-
-	pte_unmap(pte);
-
-out:
-	return page_addr;
-}
-
 static void flush_cache(void) {
 }
 #endif
 
 #ifdef RECONOS_ARCH_microblaze
-static unsigned long do_ptw(unsigned long addr) {
-	return 0;
-}
-
 static void flush_cache(void) {
 	int i;
 	int baseaddr, bytesize,linelen;
@@ -271,10 +212,6 @@ static long proc_control_ioctl(struct file *filp, unsigned int cmd,
 
 			break;
 
-		case RECONOS_PROC_CONTROL_DO_PTW:
-			do_ptw(arg);
-			break;
-
 		case RECONOS_PROC_CONTROL_CACHE_FLUSH:
 			flush_cache();
 			break;
@@ -306,21 +243,36 @@ static irqreturn_t proc_control_interrupt(int irq, void *data) {
 	return IRQ_HANDLED;
 }
 
+static struct of_device_id proc_control_of_match[] =
+{
+    { .compatible = "upb,reconos-control-3.0" },
+    { .compatible = "upb,reconos-proc-control-3.0" },
+    {}
+};
 
 int proc_control_init() {
+	struct device_node *node = NULL;
+	struct resource res;
 	int i;
 
 	__printk(KERN_INFO "[reconos-proc-control] "
 	                   "initializing driver ...\n");
 
+	// get matching of node
+	node = of_find_matching_node(NULL, proc_control_of_match);
+	if (!node)
+	{
+		__printk(KERN_ERR "[reconos-proc-control] "
+		                  "device tree node not found\n");
+		goto of_failed;
+	}
+	__printk(KERN_INFO "[reconos-proc-control] "
+	                   "found device %s\n", node->name);
 
 	// set some general information of proc control
 	strncpy(proc_control_dev.name, "reconos-proc-control", 25);
-	proc_control_dev.irq = PROC_CONTROL_IRQ;
-	proc_control_dev.addr = PROC_CONTROL_BASE_ADDR;
 	proc_control_dev.page_fault = 0;
 	proc_control_dev.hwt_reset_count = NUM_HWTS / 32 + 1;
-
 
 	// allocating reset-register
 	proc_control_dev.hwt_reset = kcalloc(proc_control_dev.hwt_reset_count, sizeof(uint32_t), GFP_KERNEL);
@@ -330,15 +282,27 @@ int proc_control_init() {
 		goto hwt_reset_failed;
 	}
 
+	// getting address from device tree
+	if (of_address_to_resource(node, 0, &res))
+	{
+		__printk(KERN_ERR "[reconos-proc-control] "
+	                      "address could not be determined\n");
+		goto req_failed;
+	}
+	proc_control_dev.addr = res.start;
+	proc_control_dev.size = res.end - res.start + 1;
+	__printk(KERN_INFO "[reconos-proc-control] "
+	                   "found memory at 0x%08x with size 0x%x\n",
+	                   proc_control_dev.addr, proc_control_dev.size);
 
 	// allocation io memory to read proc control registers
-	if (!request_mem_region(proc_control_dev.addr, PROC_CONTROL_MEM_SIZE, proc_control_dev.name)) {
+	if (!request_mem_region(proc_control_dev.addr, proc_control_dev.size, proc_control_dev.name)) {
 		__printk(KERN_WARNING "[reconos-proc-control] "
 		                      "memory region busy\n");
 		goto req_failed;
 	}
 
-	proc_control_dev.mem = ioremap(proc_control_dev.addr, PROC_CONTROL_MEM_SIZE);
+	proc_control_dev.mem = ioremap(proc_control_dev.addr, proc_control_dev.size);
 	if (!proc_control_dev.mem) {
 		__printk(KERN_WARNING "[reconos-proc-control] "
 		                      "ioremap failed\n");
@@ -349,6 +313,17 @@ int proc_control_init() {
 	for (i = 0; i < proc_control_dev.hwt_reset_count; i++)
 		proc_control_dev.hwt_reset[i] = 0xFFFFFFFF;
 	proc_control_write_reg(&proc_control_dev, PROC_CONTROL_SYS_RESET_REG, 0);
+
+	// getting interrupt number from device tree
+	proc_control_dev.irq = irq_of_parse_and_map(node, 0);
+	if (!proc_control_dev.irq)
+	{
+		__printk(KERN_ERR "[reconos-proc-control] "
+		                  "irq could not be determined\n");
+		goto irq_failed;
+	}
+	__printk(KERN_INFO "[reconos-proc-control] "
+	                   "found interrupt %d\n", proc_control_dev.irq);
 
 	// requesting interrupt
 	if (request_irq(proc_control_dev.irq, proc_control_interrupt, 0, "reconos-proc-control", &proc_control_dev)) {
@@ -396,12 +371,13 @@ irq_failed:
 	iounmap(proc_control_dev.mem);
 
 map_failed:
-	release_mem_region(proc_control_dev.addr, PROC_CONTROL_MEM_SIZE);
+	release_mem_region(proc_control_dev.addr, proc_control_dev.size);
 
 req_failed:
 	kfree(proc_control_dev.hwt_reset);
 
 hwt_reset_failed:
+of_failed:
 	return -1;
 
 out:
@@ -418,7 +394,7 @@ int proc_control_exit() {
 	free_irq(proc_control_dev.irq, &proc_control_dev);
 
 	iounmap(proc_control_dev.mem);
-	release_mem_region(proc_control_dev.addr, PROC_CONTROL_MEM_SIZE);
+	release_mem_region(proc_control_dev.addr, proc_control_dev.size);
 
 	misc_deregister(&proc_control_dev.mdev);
 
