@@ -147,7 +147,7 @@ def export_hw_thread_ise(args, hwdir, link, thread):
 		if "bbd" in thread.hwoptions:
 			if "vivado" in thread.hwoptions:
 				subprocess.call("""
-				  source /opt/Xilinx/Vivado/2014.4/settings64.sh;
+				  source /opt/Xilinx/Vivado/2016.2/settings64.sh;
 				  cd {0};
 				  vivado_hls -f script_csynth.tcl;
 				  vivado -mode batch -source script_vivado_edn.tcl;""".format(tmp.name),
@@ -168,7 +168,7 @@ def export_hw_thread_ise(args, hwdir, link, thread):
 
 		else:
 			subprocess.call("""
-			  source /opt/Xilinx/Vivado/2014.4/settings64.sh;
+			  source /opt/Xilinx/Vivado/2016.2/settings64.sh;
 			  cd {0};
 			  vivado_hls -f script_csynth.tcl;""".format(tmp.name),
 			  shell=True)
