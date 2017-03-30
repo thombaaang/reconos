@@ -219,6 +219,8 @@ static long proc_control_ioctl(struct file *filp, unsigned int cmd,
 
 		case RECONOS_PROC_CONTROL_SET_PGD_ADDR:
 			data = (uint32_t) virt_to_phys(current->mm->pgd);
+			__printk(KERN_INFO "[reconos-proc-control] "
+						"set_pgd_address: 0x%8x\n", data);
 			write_reg(dev, PGD_ADDR_REG, data);
 			break;
 
