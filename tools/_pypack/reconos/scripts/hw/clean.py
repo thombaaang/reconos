@@ -36,7 +36,7 @@ def clean_ise(args):
 			return
 		
 		subprocess.call("""
-		  source /opt/Xilinx/""" + prj.ise + """/ISE_DS/settings64.sh;
+		  source /opt/Xilinx/""" + prj.impinfo.xil[1] + """/ISE_DS/settings64.sh;
 		  echo -e "run clean\nexit\n" | xps -nw system""",
 		  shell=True)
 

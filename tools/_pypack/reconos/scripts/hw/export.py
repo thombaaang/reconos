@@ -24,35 +24,13 @@ def get_parser(prj):
 	parser.add_argument("hwdir", help="alternative export directory", nargs="?")
 	return parser
 
-def export_hw_cmd(args):
-	if args.thread is None:
-		export_hw(args, args.hwdir, args.link)
-	else:
-		export_hw_thread(args, args.hwdir, args.link, args.thread)
-
-def export_hw(args, hwdir, link):
-	if args.prj.impinfo.xil[0] == "ise":
-		export_hw_ise(args, hwdir, link)
-	else:
-		log.error("Xilinx tool not supported")
-
-def export_hw_thread(args, hwdir, link, thread):
-	if args.prj.impinfo.xil[0] == "ise":
-		export_hw_thread_ise(args, hwdir, link, thread)
-	else:
-		log.error("Xilinx tool not supported")
-
-def export_hw_ise(args, hwdir, link):
-	prj = args.prj
-	hwdir = hwdir if hwdir is not None else prj.basedir + ".hw"
-
-	log.info("Export hardware to directory '" + hwdir + "'")
-
+def get_dict(prj):
 	dictionary = {}
 	dictionary["NUM_SLOTS"] = len(prj.slots)
 	dictionary["NUM_CLOCKS"] = len(prj.clocks)
 	dictionary["SYSCLK"] = prj.clock.id
 	dictionary["SYSRST"] = "SYSRESET"
+	dictionary["TOOL"]   = prj.impinfo.xil[0]
 	dictionary["SLOTS"] = []
 	for s in prj.slots:
 		if s.threads:
@@ -74,6 +52,45 @@ def export_hw_ise(args, hwdir, link):
 		d["O"] = param[1]
 
 		dictionary["CLOCKS"].append(d)
+	
+	return dictionary
+	
+def export_hw_cmd(args):
+	if args.thread is None:
+		export_hw(args, args.hwdir, args.link)
+	else:
+		export_hw_thread(args, args.hwdir, args.link, args.thread)
+
+def export_hw(args, hwdir, link):
+	if args.prj.impinfo.xil[0] == "ise":
+		export_hw_ise(args, hwdir, link)
+	elif args.prj.impinfo.xil[0] == "vivado":
+		export_hw_vivado(args, hwdir, link)
+	else:
+		log.error("Xilinx tool not supported")
+
+def export_hw_thread(args, hwdir, link, thread):
+	if (args.prj.impinfo.xil[0] == "ise") or (args.prj.impinfo.xil[0] == "vivado"):
+		export_hw_thread_ise_vivado(args, hwdir, link, thread)
+	else:
+		log.error("Xilinx tool not supported")
+
+def export_hw_ise(args, hwdir, link):
+	''' 
+	Generates the project directory for an ISE/XPS project.
+	
+	It first compiles the configuration dictionary and then processes the templates
+	according to the configuration dictionary.
+	
+	hwdir gives the name of the project directory
+	link boolean; if true files will be linked instead of copied
+	'''
+	prj = args.prj
+	hwdir = hwdir if hwdir is not None else prj.basedir + ".hw"
+
+	log.info("Export hardware to directory '" + hwdir + "'")
+
+	dictionary = get_dict(prj)
 
 	log.info("Generating export files ...")
 	tmpl = "ref_" + prj.impinfo.os + "_" + "_".join(prj.impinfo.board) + "_" + prj.impinfo.design + "_" + prj.impinfo.xil[1]
@@ -83,7 +100,17 @@ def export_hw_ise(args, hwdir, link):
 	for t in prj.threads:
 		export_hw_thread(args, shutil2.join(hwdir, "pcores"), link, t.name)
 
-def export_hw_thread_ise(args, hwdir, link, thread):
+def export_hw_thread_ise_vivado(args, hwdir, link, thread):
+	''' 
+	Generates sources for one hardware thread for ReconOS in an ISE/XPS or Vivado project.
+	
+	It checks whether vhdl or hls sources shall be used and generates the hardware thread
+	from the source templates. 
+	
+	hwdir gives the name of the project directory
+	link boolean; if true files will be linked instead of copied
+	thread is the name of the hardware thread to generate
+	'''
 	prj = args.prj
 	hwdir = hwdir if hwdir is not None else prj.basedir + ".hw" + "." + thread.lower()
 
@@ -147,10 +174,10 @@ def export_hw_thread_ise(args, hwdir, link, thread):
 		if "bbd" in thread.hwoptions:
 			if "vivado" in thread.hwoptions:
 				subprocess.call("""
-				  source /opt/Xilinx/Vivado/2016.2/settings64.sh;
+				  source /opt/Xilinx/Vivado/{1}/settings64.sh;
 				  cd {0};
 				  vivado_hls -f script_csynth.tcl;
-				  vivado -mode batch -source script_vivado_edn.tcl;""".format(tmp.name),
+				  vivado -mode batch -notrace -nojournal -nolog -source script_vivado_edn.tcl;""".format(tmp.name, prj.impinfo.xil[1]),
 				  shell=True)
 
 				dictionary = {}
@@ -168,9 +195,9 @@ def export_hw_thread_ise(args, hwdir, link, thread):
 
 		else:
 			subprocess.call("""
-			  source /opt/Xilinx/Vivado/2016.2/settings64.sh;
+			  source /opt/Xilinx/Vivado/{1}/settings64.sh;
 			  cd {0};
-			  vivado_hls -f script_csynth.tcl;""".format(tmp.name),
+			  vivado_hls -f script_csynth.tcl;""".format(tmp.name, prj.impinfo.xil[1]),
 			  shell=True)
 
 			dictionary = {}
@@ -186,3 +213,49 @@ def export_hw_thread_ise(args, hwdir, link, thread):
 		shutil2.rmtree("/tmp/test")
 		shutil2.mkdir("/tmp/test")
 		shutil2.copytree(tmp.name, "/tmp/test")
+		
+def export_hw_vivado(args, hwdir, link):
+	''' 
+	Generates a TCL script for generation of a Vivado based project.
+	
+	It first compiles the configuration dictionary and then processes the templates
+	according to the configuration dictionary.
+	
+	hwdir gives the name of the project directory
+	link boolean; if true files will be linked instead of copied
+	'''
+	
+	print("export_hw_vivado")
+	prj = args.prj
+	hwdir = hwdir if hwdir is not None else prj.basedir + ".hw"
+
+	log.info("Export hardware to directory '" + hwdir + "'")
+
+	dictionary = get_dict(prj)
+
+	log.info("Generating export files ...")
+	
+	
+	tmpl = "ref_" + prj.impinfo.os + "_" + "_".join(prj.impinfo.board) + "_" + prj.impinfo.design + "_" + prj.impinfo.xil[0] + "_" + prj.impinfo.xil[1]
+	print("Using template directory " + tmpl)
+	# TODO: No error message when template directory is not found!
+	prj.apply_template(tmpl, dictionary, hwdir, link)
+
+	log.info("Generating threads ...")
+	for t in prj.threads:
+		export_hw_thread(args, shutil2.join(hwdir, "pcores"), link, t.name)
+		
+	print("Calling TCL script to generate Vivado IP Repository")
+	subprocess.call("""
+					source /opt/Xilinx/Vivado/{1}/settings64.sh;
+					cd {0};
+					vivado -mode batch -notrace -nojournal -nolog -source create_ip_library.tcl;""".format(hwdir, prj.impinfo.xil[1]),
+					shell=True)
+	
+	print("Calling TCL script to generate ReconOS in Vivado IP Integrator")
+	subprocess.call("""
+					source /opt/Xilinx/Vivado/{1}/settings64.sh;
+					cd {0};
+					vivado -mode batch -notrace -nojournal -nolog -source system.tcl -tclargs -proj_name myReconOS -proj_path . -hwts rt_sortdemo,rt_sortdemo;""".format(hwdir, prj.impinfo.xil[1]),
+					shell=True)
+

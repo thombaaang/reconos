@@ -65,6 +65,22 @@ def _gen_preproc(d):
 
 	return _gen_
 
+#
+# Internal method used for replacing each occurence of an if
+# statement in the source file.
+#
+#   d - dictionary including the used keys
+#
+def _if_preproc(d):
+	def _gen_(m):
+		eval_string="{} {} {}".format(m.group("key"), m.group("comp"), m.group("value"))
+		
+		if eval(eval_string, d):
+			return m.group("data")
+		else:
+			return ""
+	
+	return _gen_
 
 #
 # Preprocesses the given file using a dictionary containing keys and
@@ -86,8 +102,15 @@ def preproc(filepath, dictionary, mode, force=False):
 	else:
 		data = re.sub(r"<<reconos_preproc>>", "", data)
 
+	# Generate syntax: <<generate for KEY(OPTIONAL = CONDITION)>> ... <<end generate>>
+	# Used to automatically generate several lines of code.
 	reg = r"<<generate for (?P<key>[A-Za-z0-9_]*?)(?:\((?P<cond>.*?)\))?>>\n?(?P<data>.*?)<<end generate>>"
 	data = re.sub(reg, _gen_preproc(dictionary), data, 0, re.DOTALL)
+
+	# If syntax: <<if KEY OPERATOR VALUE>> ... <<end if>>
+	# Used to conditionally include or exclude code fragments
+	reg = r"<<if (?P<key>[A-Za-z0-9_]*?)(?P<comp>[<>=!]*?)(?P<value>[A-Za-z0-9_\"]*?)>>\n?(?P<data>.*?)<<end if>>"
+	data = re.sub(reg, _if_preproc(dictionary), data, 0, re.DOTALL)
 
 	reg = r"<<(?P<key>[A-Za-z0-9_]+)>>"
 	def repl(m): 
