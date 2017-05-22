@@ -9,21 +9,25 @@
 --   title:        IP-Core - MEMIF MMU - TLB
 --
 --   project:      ReconOS
---   author:       Christoph Rüthing, University of Paderborn
+--   author:       Christoph R??thing, University of Paderborn
 --   description:  The TLB (translation lookaside buffer) caches the last
 --                 address translations for faster access.
 --
 -- ======================================================================
 
+<<reconos_preproc>>
 
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 use ieee.std_logic_misc.all;
+use ieee.math_real.all;
 
+<<if TOOL=="ise">>
 library proc_common_v3_00_a;
 use proc_common_v3_00_a.proc_common_pkg.all;
+<<end if>>
 
 entity tlb is
 	generic (
@@ -56,7 +60,9 @@ architecture implementation of tlb is
 	signal tag_mem  : TAG_MEM_T;
 	signal data_mem : DATA_MEM_T;
 	
-	signal wrptr : std_logic_vector(clog2(C_TLB_SIZE) - 1 downto 0); 
+	--signal wrptr : std_logic_vector(clog2(C_TLB_SIZE) - 1 downto 0); 
+	signal wrptr : std_logic_vector(integer(ceil(log2(real(C_TLB_SIZE)))) - 1 downto 0); 
+	
 
 begin
 

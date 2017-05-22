@@ -9,7 +9,7 @@
 --   title:        IP-Core - OSIF - Top level entity
 --
 --   project:      ReconOS
---   author:       Christoph Rüthing, University of Paderborn
+--   author:       Christoph R??thing, University of Paderborn
 --   description:  A AXI slave which maps the FIFOs of the HWTs to
 --                 registers accessible from the AXI-Bus.
 --                   Reg0: Read data
@@ -25,11 +25,20 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+<<if TOOL=="ise">>
 library proc_common_v3_00_a;
 use proc_common_v3_00_a.ipif_pkg.all;
 
 library axi_lite_ipif_v1_01_a;
 use axi_lite_ipif_v1_01_a.axi_lite_ipif;
+<<end if>>
+
+<<if TOOL=="vivado">>
+library axi_lite_ipif_v3_0_4;
+use 	 axi_lite_ipif_v3_0_4.ipif_pkg.all;
+use 	 axi_lite_ipif_v3_0_4.axi_lite_ipif;
+<<end if>>
+
 
 library reconos_osif_v1_00_a;
 use reconos_osif_v1_00_a.user_logic;
@@ -150,7 +159,12 @@ begin
 	--
 	--   @see axi_lite_ipif_ds765.pdf
 	--
+<<if TOOL=="ise">>
 	ipif : entity axi_lite_ipif_v1_01_a.axi_lite_ipif
+<<end if>>
+<<if TOOL=="vivado">>
+        ipif : entity axi_lite_ipif_v3_0_4.axi_lite_ipif
+<<end if>>
 		generic map (
 			C_S_AXI_ADDR_WIDTH => C_S_AXI_ADDR_WIDTH,
 			C_S_AXI_DATA_WIDTH => C_S_AXI_DATA_WIDTH,

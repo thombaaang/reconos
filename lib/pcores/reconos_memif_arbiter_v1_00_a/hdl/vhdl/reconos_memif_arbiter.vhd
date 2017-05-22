@@ -9,7 +9,7 @@
 --   title:        IP-Core - MEMIF Arbiter
 --
 --   project:      ReconOS
---   author:       Christoph Rüthing, University of Paderborn
+--   author:       Christoph R??thing, University of Paderborn
 --   description:  The arbiter connects the different HWTs
 --                 to the memory system of ReconOS. It acts as an
 --                 arbiter and controls the the memory access.
@@ -22,8 +22,16 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+<<if TOOL=="ise">>
 library reconos_v3_01_a;
 use reconos_v3_01_a.reconos_pkg.all;
+<<end if>>
+
+
+<<if TOOL=="vivado">>
+library reconos_v3_01_a;
+use reconos_v3_01_a.reconos_pkg.all;
+<<end if>>
 
 entity reconos_memif_arbiter is
 	--

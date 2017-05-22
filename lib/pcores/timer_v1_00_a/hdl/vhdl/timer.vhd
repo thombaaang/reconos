@@ -9,25 +9,34 @@
 --   title:        IP-Core - Timer
 --
 --   project:      ReconOS
---   author:       Christoph Rüthing, University of Paderborn
+--   author:       Christoph R??thing, University of Paderborn
 --   description:  A simple timer providing a accurate time for both
 --                 hardware and software via direct signals and memory
 --                 mapped registers on the AXI-interface.
 --
 -- ======================================================================
 
+<<reconos_preproc>>
 
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
+<<if TOOL=="ise">>
 library proc_common_v3_00_a;
 use proc_common_v3_00_a.proc_common_pkg.all;
 use proc_common_v3_00_a.ipif_pkg.all;
 
 library axi_lite_ipif_v1_01_a;
 use axi_lite_ipif_v1_01_a.axi_lite_ipif;
+<<end if>>
+
+<<if TOOL=="vivado">>
+library axi_lite_ipif_v3_0_4;
+use 	 axi_lite_ipif_v3_0_4.ipif_pkg.all;
+use 	 axi_lite_ipif_v3_0_4.axi_lite_ipif;
+<<end if>>
 
 library timer_v1_00_a;
 use timer_v1_00_a.user_logic;
@@ -130,7 +139,12 @@ architecture implementation of timer is
 
 begin
 
+<<if TOOL=="ise">>
 	AXI_LITE_IPIF_I : entity axi_lite_ipif_v1_01_a.axi_lite_ipif
+<<end if>>
+<<if TOOL=="vivado">>
+        AXI_LITE_IPIF_I : entity axi_lite_ipif_v3_0_4.axi_lite_ipif
+<<end if>>
 		generic map (
 			C_S_AXI_DATA_WIDTH             => IPIF_SLV_DWIDTH,
 			C_S_AXI_ADDR_WIDTH             => C_S_AXI_ADDR_WIDTH,
